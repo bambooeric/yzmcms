@@ -9,8 +9,8 @@
 <nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 内容管理 <span class="c-gray en">&gt;</span> 批量更新URL <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
 <div class="page-container">
   <div class="explain"> 
-       <p>1：仅当修改了网站域名或者修改了前端URL规则时，请批量更新，未改变时，不需要更新 .</p>
-       <p>2：URL规则设置：系统管理 > 系统设置 > 附加设置 > 前端URL规则.</p>
+       <p>1：仅当修改了“网站域名”或修改了“前台URL模式”时，才需批量更新，其他情况，无需更新 .</p>
+       <p>2：前台URL模式修改：系统管理 > 系统设置 > 附加设置 > 前台URL模式.</p>
   </div>
 	<div class="pd-5 mt-20">
 	<table class="table table-border table-bordered table-bg table-hover">
@@ -40,10 +40,10 @@
 				<td rowspan="2" style="text-align:center">
 					<?php echo $select;?>
 				</td>
-				<td style="font-size:14px">更新栏目URL &nbsp;&nbsp;<input type="button" name="dosubmit" value="开始更新" class="btn btn-secondary radius" onclick="update_category_url()"></td>
+				<td style="font-size:14px">更新栏目URL &nbsp;&nbsp;<input type="button" value="开始更新" class="btn btn-secondary radius" onclick="update_category_url()"></td>
 			</tr>
 			<tr> 
-				<td style="font-size:14px">更新内容URL &nbsp;&nbsp;<input type="button" name="dosubmit" value="开始更新" class="btn btn-secondary radius" onclick="update_content_url()"><span class="c-red" style="margin-left:10px;font-size:12px">*当内容页有跳转链接时，该URL将会失效</span></td>
+				<td style="font-size:14px">更新内容URL &nbsp;&nbsp;<input type="button" value="开始更新" class="btn btn-secondary radius" onclick="update_content_url()"></td>
 			</tr>
 		</tbody>
 	</form>
