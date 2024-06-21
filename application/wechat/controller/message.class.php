@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('wechat_common', 'wechat', 0);
 yzm_base::load_sys_class('page','',0);
@@ -39,7 +49,7 @@ class message extends wechat_common{
 				{"content":"'.$content.'"}
 			}';
 			
-			$json_arr = $this->https_request($url, $json_str);
+			$json_arr = https_request($url, $json_str);
 
 			if($json_arr['errcode'] == 0){
 				$arr['openid'] = $openid;
@@ -50,7 +60,7 @@ class message extends wechat_common{
 				$arr['issystem'] = 1;
 				
 				D('wechat_message')->insert($arr);
-				showmsg('操作成功！', U('init'), 1);
+				showmsg(L('operation_success'), U('init'), 1);
 			}else{
 				showmsg('操作失败！'.$json_arr['errmsg'], 'stop');
 			}
@@ -59,7 +69,7 @@ class message extends wechat_common{
 			
 			$wechat_message = D('wechat_message');
 			
-			$data = D('wechat_user')->field('openid, nickname, headimgurl')->where(array('openid' => $openid))->find();
+			$data = D('wechat_user')->field('openid, nickname, headimgurl, remark')->where(array('openid' => $openid))->find();
 			$wechat_message->update(array('isread'=>1), array('openid' => $openid));
 			$message = $wechat_message->field('issystem, inputtime, content')->where(array('openid' => $openid))->order('id ASC')->select();
 			include $this->admin_tpl('send_message');	
@@ -98,7 +108,7 @@ class message extends wechat_common{
 		global $wechat_user;
 		$wechat_user = isset($wechat_user) ? $wechat_user : D('wechat_user');
         $data = $wechat_user->field('nickname, headimgurl, remark')->where(array('openid' => $openid))->find();
-		return '<img src="'.$data['headimgurl'].'" height="25" title="'.$data['remark'].'"> '.$data['nickname'];
+		return $data['nickname'] ? '<img src="'.$data['headimgurl'].'" height="25" title="'.$data['remark'].'"> '.$data['nickname'] : ($data['remark'] ? $data['remark'] : $openid);
     }
 
 }

@@ -1,5 +1,5 @@
 <?php include $this->admin_tpl('meta');?>
-<title>修改个人信息 - YzmCMS内容管理系统</title>
+<title>修改资料 - YzmCMS内容管理系统</title>
 </head>
 <body>
 <article class="page-container">
@@ -10,25 +10,21 @@
 			 <li><label>所属角色：</label><?php echo $data['rolename'];?></li>
 			 <li><label>最后登录IP：</label><?php echo $data['loginip'];?></li>
 			 <li><label>最后登录时间：</label><?php echo date('Y-m-d H:i:s',$data['logintime']);?></li>
-			 <li><label>昵称：</label><input type="text" class="input" placeholder="发布内容时显示" name="nickname" value="<?php echo $data['nickname'];?>"></li>
+			 <li class="yzm-explain-box"><label>昵称：</label><input type="text" class="input" placeholder="发布内容时显示" name="nickname" value="<?php echo $data['nickname'];?>"> <span class="yzm-explain">发布内容时显示，<br>修改后重新登录生效.</span></li>
 			 <li><label>邮箱：</label><input type="text" class="input" placeholder="邮箱" name="email" value="<?php echo $data['email'];?>"></li>
 			 <li><label>真实姓名：</label><input type="text" class="input" placeholder="真实姓名" name="realname" value="<?php echo $data['realname'];?>"></li>
-			 <input type="hidden" name="dosubmit" value="1">
-			 <li>
-			 	<input class="dosubmit w_120 btn-primary radius" name="dosubmit" type="submit" value="提交">
-			 	<input class="btn w_120 btn-default radius h35" type="button" value="取消" onclick="yzmcms_close()">
-			 </li>
 		</ul>
+		<div class="footer_btn">
+			<input type="hidden" name="dosubmit" value="1">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
+		</div>
 	</form>
 </div>
 </article>
 <?php include $this->admin_tpl('footer');?> 
 <script type="text/javascript">
 	function dosub(obj){
-		 if($("input[name='nickname']").val() == ''){
-			 layer.msg('用户昵称不能为空！');
-			 return false;
-		 }
 
 		$.ajax({
 		 type: 'POST',
@@ -37,14 +33,17 @@
 		 dataType: "json", 
 		 success: function (msg) {
 			if(msg.status == 1){
-				layer.msg(msg.message, {time:2000});
+				var index = parent.layer.getFrameIndex(window.name);
+				layer.msg(msg.message, {icon:1, time:2000}, function(){
+					parent.layer.close(index);
+				});
 		    }else{
-				layer.msg(msg.message);
+				layer.msg(msg.message, {icon:2});
 			}
 		 }
 		})
 
-		 return false;			 
+		return false;			 
 	}
 </script> 
 </body>

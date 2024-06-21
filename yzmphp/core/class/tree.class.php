@@ -22,11 +22,8 @@ class tree {
 	*/
 	public $icon = array('│','├','└');
 	public $nbsp = "&nbsp;";
-
-	/**
-	* @access private
-	*/
 	public $ret = '';
+	public $str = '';
 
 	/**
 	* 构造函数，初始化类
@@ -130,6 +127,8 @@ class tree {
 				}
 				$spacer = $adds ? $adds.$j : '';
 				$selected = $id==$sid ? 'selected' : '';
+				if(!is_array($value)) return false;
+				if(isset($value['str']) || isset($value['str_group'])) return false;
 				@extract($value);
 				$parentid == 0 && $str_group ? eval("\$nstr = \"$str_group\";") : eval("\$nstr = \"$str\";");
 				$this->ret .= $nstr;
@@ -145,7 +144,7 @@ class tree {
     /**
 	* 同上一方法类似,但允许多选
 	*/
-	public function get_tree_multi($myid, $str, $sid = 0, $adds = ''){
+	public function get_tree_multi($myid, $str, $str2, $sid = 0, $adds = ''){
 		$number=1;
 		$child = $this->get_child($myid);
 		if(is_array($child)){
@@ -161,10 +160,15 @@ class tree {
 				$spacer = $adds ? $adds.$j : '';
 				
 				$selected = $this->have($sid,$id) ? 'selected' : '';
+				if(!is_array($a) || isset($a['str'])) return false;
 				@extract($a);
-				eval("\$nstr = \"$str\";");
+				if (empty($html_disabled)) {
+					eval("\$nstr = \"$str\";");
+				} else {
+					eval("\$nstr = \"$str2\";");
+				}
 				$this->ret .= $nstr;
-				$this->get_tree_multi($id, $str, $sid, $adds.$k.'&nbsp;');
+				$this->get_tree_multi($id, $str, $str2, $sid, $adds.$k.'&nbsp;');
 				$number++;
 			}
 		}
@@ -195,6 +199,7 @@ class tree {
 				$spacer = $adds ? $adds.$j : '';
 				
 				$selected = $this->have($sid,$id) ? 'selected' : '';
+				if(!is_array($a) || isset($a['str']) || isset($a['str2'])) return false;
 				@extract($a);
 				if (empty($html_disabled)) {
 					eval("\$nstr = \"$str\";");
@@ -233,6 +238,7 @@ class tree {
         if(!$recursion) $this->str .='<ul'.$effected.'  class="'.$style.'">';
         foreach($child as $id=>$a) {
 
+        	if(!is_array($a) || isset($a['str']) || isset($a['str2'])) return false;
         	@extract($a);
 			if($showlevel > 0 && $showlevel == $currentlevel && $this->get_child($id)) $folder = 'hasChildren'; //如设置显示层级模式@2011.07.01
         	$floder_status = isset($folder) ? ' class="'.$folder.'"' : '';		
@@ -290,4 +296,3 @@ class tree {
 		return(strpos(',,'.$list.',',','.$item.','));
 	}
 }
-?>

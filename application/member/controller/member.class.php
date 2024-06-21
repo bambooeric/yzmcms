@@ -45,30 +45,38 @@ class member extends common{
 		$where = '1=1';
 		if(isset($_GET['dosubmit'])){	
 			$status = isset($_GET["status"]) ? intval($_GET["status"]) : 99;
+			$vip = isset($_GET["vip"]) ? intval($_GET["vip"]) : 99;
 			$groupid = isset($_GET["groupid"]) ? intval($_GET["groupid"]) : 0;
-			$searinfo = isset($_GET["searinfo"]) ? safe_replace($_GET["searinfo"]) : '';
+			$searinfo = isset($_GET['searinfo']) ? safe_replace($_GET['searinfo']) : '';
 			$type = isset($_GET["type"]) ? $_GET["type"] : 1;
-			
-			if($searinfo != ''){
-				if($type == '1')
-					$where .= ' AND username LIKE \'%'.$searinfo.'%\'';
-				elseif($type == '2')
-					$where .= ' AND userid = \''.$searinfo.'\'';
-				else
-					$where .= ' AND email LIKE \'%'.$searinfo.'%\'';
+
+			if($status != 99) {
+				$where .= ' AND status = '.$status;
 			}
-			
+
+			if($vip != 99) {
+				$where .= ' AND vip = '.$vip;
+			}
+
+			if($groupid) {
+				$where .= ' AND groupid = '.$groupid;
+			}
+
 			if(isset($_GET['start']) && isset($_GET['end']) && $_GET['start']) {
 				$where .= " AND `regdate` >= '".strtotime($_GET['start'])."' AND `regdate` <= '".strtotime($_GET['end'])."' ";
 			}
 			
-			if($status != 99) {
-				$where .= ' AND status = '.$status;
+			if($searinfo){
+				if($type == '1')
+					$where .= ' AND username LIKE \'%'.$searinfo.'%\'';
+				elseif($type == '2')
+					$where .= ' AND userid = \''.$searinfo.'\'';
+				elseif($type == '3')
+					$where .= ' AND email LIKE \'%'.$searinfo.'%\'';
+				else
+					$where .= ' AND regip = \''.$searinfo.'\'';
 			}
 			
-			if($groupid) {
-				$where .= ' AND groupid = '.$groupid;
-			}			
 		}
 		$_GET = array_map('htmlspecialchars', $_GET);
 		$total = $member->where($where)->total();
@@ -87,7 +95,8 @@ class member extends common{
 			
 			if(!is_username($_POST['username'])) return_json(array('status'=>0,'message'=>'用户名格式不正确！'));
 			if(!is_email($_POST['email'])) return_json(array('status'=>0,'message'=>'邮箱格式不正确！'));
-			if(D('member')->where(array('username' => $_POST['username']))->find()) return_json(array('status'=>0,'message'=>'用户名已存在！'));
+			if(D('member')->field('userid')->where(array('username' => $_POST['username']))->find()) return_json(array('status'=>0,'message'=>'用户名已存在！'));
+			if(D('member')->field('userid')->where(array('email' => $_POST['email']))->find()) return_json(array('status'=>0,'message'=>'邮箱已存在！'));
 
 			$data['username'] = $_POST['username'];
 			$data['password'] = password($_POST['password']);
@@ -127,17 +136,18 @@ class member extends common{
 	public function edit(){ 
 		$userid = isset($_GET['userid']) ? intval($_GET['userid']) : 0;
 		if(isset($_POST['dosubmit'])){
-			if($_POST['password'] == ''){
-				unset($_POST['password']);
-			}else{
+
+			if($_POST['password']){
 				$_POST['password'] = password($_POST['password']);
+			}else{
+				unset($_POST['password']);
 			}
-			if(isset($_POST['del_userpic']) && $_POST['del_userpic'] == '1'){		
-				if($_POST['userpic'] != ''){					
-					$userpic = YZMPHP_PATH.ltrim($_POST['userpic'], SITE_PATH);
-					if(in_array(fileext($userpic), array('jpg', 'jpeg', 'png', 'gif')) && is_file($userpic)) @unlink($userpic); 
-					$_POST['userpic'] = '';					
-				}
+			
+			if(isset($_POST['del_userpic']) && $_POST['del_userpic'] == '1' && $_POST['userpic']){		
+				$userpic = YZMPHP_PATH.ltrim($_POST['userpic'], SITE_PATH);
+				if(is_img(fileext($userpic)) && is_file($userpic)) @unlink($userpic); 
+				$_POST['userpic'] = '';	
+				D('comment')->update(array('userpic'=>''),array('userid'=>$userid));
 			}
 			
 			if(isset($_POST['vip']) && $_POST['overduedate']!=''){
@@ -198,8 +208,12 @@ class member extends common{
 			foreach($_POST['ids'] as $val){
 				$member->delete(array('userid'=>$val));
 				$member_detail->delete(array('userid'=>$val));
+				D('comment')->delete(array('userid'=>$val));
+				D('favorite')->delete(array('userid'=>$val));
+				D('member_authorization')->delete(array('userid'=>$val));
+				D('member_follow')->delete(array('userid'=>$val));
 			}
-			showmsg(L('operation_success'),'',1);
+			return_json(array('status'=>1,'message'=>L('operation_success')));
 		}
 	}
 
@@ -225,12 +239,19 @@ class member extends common{
 	 * 通过审核
 	 */	
 	public function adopt(){ 
-		if($_POST && is_array($_POST['ids'])){
+		if(is_ajax()){
+			$id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+			$value = isset($_POST['value']) ? intval($_POST['value']) : 0;
+			D('member')->update(array('status'=>$value), array('userid'=>$id));
+			return_json(array('status'=>1, 'message'=>L('operation_success')));
+		}
+
+		if(is_post() && is_array($_POST['ids'])){
 			$member = D('member');
 			foreach($_POST['ids'] as $val){
-				$member->update(array('status' => '1'), array('userid' => $val));
+				$member->update(array('status'=>1), array('userid' => $val));
 			}
-			showmsg(L('operation_success'),'',1);
+			showmsg(L('operation_success'), '', 1);
 		}
 	}
 
@@ -245,7 +266,7 @@ class member extends common{
 			foreach($_POST['ids'] as $val){
 				$member->update(array('status' => '2'), array('userid' => $val));
 			}
-			showmsg('锁定用户成功！');
+			showmsg('锁定用户成功！','',1);
 		}
 	}
 	
@@ -260,7 +281,7 @@ class member extends common{
 			foreach($_POST['ids'] as $val){
 				$member->update(array('status' => '1'), array('userid' => $val));
 			}
-			showmsg('解锁会员成功！');
+			showmsg('解锁会员成功！','',1);
 		}
 	}
 	
@@ -294,17 +315,22 @@ class member extends common{
 		$where = '1=1';
 		if(isset($_GET['dosubmit'])){
 
-			$searinfo = isset($_GET["searinfo"]) ? safe_replace($_GET["searinfo"]) : '';
-			$capital_type = isset($_GET["capital_type"]) ? $_GET["capital_type"] : 1;
-			$type = isset($_GET["type"]) ? $_GET["type"] : 1;
+			$searinfo = isset($_GET['searinfo']) ? safe_replace($_GET['searinfo']) : '';
+			$capital_type = isset($_GET["capital_type"]) ? intval($_GET["capital_type"]) : 99;
+			$type = isset($_GET["type"]) ? intval($_GET["type"]) : 1;
 			
-			$where .= $capital_type == '1' ? ' AND `type`=1' : ' AND `type`=2';
+			if($capital_type < 99){
+				$where .= $capital_type == 1 ? ' AND `type`=1' : ' AND `type`=2';
+			}
 				
-			if($searinfo != ''){
-				if($type == '1')
+			if($searinfo){
+				if($type == '1'){
 					$where .= ' AND username LIKE \'%'.$searinfo.'%\'';
-				else
+				}elseif($type == '2'){
 					$where .= ' AND trade_sn = \''.$searinfo.'\'';
+				}else{
+					$where .= ' AND remarks LIKE \'%'.$searinfo.'%\'';
+				}
 			}
 			
 			if(isset($_GET['start']) && isset($_GET['end']) && $_GET['start']) {
@@ -363,17 +389,22 @@ class member extends common{
 		$where = '1=1';
 		if(isset($_GET['dosubmit'])){	
 		
-			$searinfo = isset($_GET["searinfo"]) ? safe_replace($_GET["searinfo"]) : '';
-			$capital_type = isset($_GET["capital_type"]) ? $_GET["capital_type"] : 1;
-			$type = isset($_GET["type"]) ? $_GET["type"] : 1;
+			$searinfo = isset($_GET['searinfo']) ? safe_replace($_GET['searinfo']) : '';
+			$capital_type = isset($_GET["capital_type"]) ? intval($_GET["capital_type"]) : 1;
+			$type = isset($_GET["type"]) ? intval($_GET["type"]) : 1;
 			
-			$where .= $capital_type == '1' ? ' AND `type`=1' : ' AND `type`=2';
+			if($capital_type < 99){
+				$where .= $capital_type == '1' ? ' AND `type`=1' : ' AND `type`=2';
+			}
 			
-			if($searinfo != ''){
-				if($type == '1')
+			if($searinfo){
+				if($type == '1'){
 					$where .= ' AND username LIKE \'%'.$searinfo.'%\'';
-				else
+				}elseif($type == '2'){
 					$where .= ' AND trade_sn = \''.$searinfo.'\'';
+				}else{
+					$where .= ' AND remarks LIKE \'%'.$searinfo.'%\'';
+				}
 			}
 			
 			if(isset($_GET['start']) && isset($_GET['end']) && $_GET['start']) {
@@ -401,31 +432,65 @@ class member extends common{
 			showmsg(L('operation_success'),'',1);
 		}
 	}
+
+
+	/**
+	 * 入账/消费记录备注修改
+	 */	
+	public function public_edit_remarks(){
+		$id = input('post.pk', 0, 'intval');
+		$value = input('post.value', '', 'trim');
+		$type = input('post.type', 0, 'intval');
+		if(!$id) return_json(array('status'=>0, 'message'=>L('illegal_parameters')));	
+		$dbname = $type ? 'pay' : 'pay_spend';
+		D($dbname)->update(array('remarks'=>$value), array('id'=>$id), true);
+		return_json(array('status'=>1, 'message'=>L('operation_success')));	
+	}
+
 	
 
 	/**
 	 * 会员统计
 	 */	
 	public function member_count(){ 
-		//统计开始时间
-		$starttime = strtotime(date('Y-m-d'))-10*24*3600;
 
-		//统计结束时间
+		$data1 = D('member')->total();
+		$data2 = D('member')->where(array('status'=>1))->total();
+		$data3 = D('member')->where(array('status'=>2))->total();
+		$data4 = D('member')->where(array('vip'=>1))->total();
+		$data5 = D('member')->where(array('lastdate>'=>strtotime(date('Y-m-d', strtotime('-1 week')))))->total();
+		$data6 = D('member')->where(array('email_status'=>1))->total();
+
+		//近一周统计开始时间
+		$starttime = strtotime(date('Y-m-d'))-7*24*3600;
+
+		//近一周统计结束时间
 		$endtime = strtotime(date('Y-m-d'));
 
 		$where = "regdate > $starttime";  //无需加结束条件，否则统计不到今日数据
-		$data = D('member')->field("COUNT(*) AS num,FROM_UNIXTIME(regdate, '%Y-%m-%d') AS gap")->where($where)->group('gap')->select();
+		$data = D('member')->field("COUNT(*) AS num,FROM_UNIXTIME(regdate, '%m/%d') AS gap")->where($where)->group('gap')->select();
 		$arr = array();
 		foreach ($data as $val){
 			$arr[$val['gap']] = intval($val['num']);
 		}
 
+		$result1 = array();
 		for($i=$starttime; $i<=$endtime; $i = $i+24*3600){
-			$num = isset($arr[date('Y-m-d',$i)]) ? $arr[date('Y-m-d',$i)] : 0;				
-			$result['day'][] = date('Y-m-d',$i);
-			$result['num'][] = $num;
+			$num = isset($arr[date('m/d',$i)]) ? $arr[date('m/d',$i)] : 0;				
+			$result1['day'][] = date('m/d',$i);
+			$result1['num'][] = $num;
 		}
-		$result = json_encode($result);
+		$result1 = json_encode($result1);
+
+		// 会员组人员统计
+		$result2 = array();
+		foreach(get_groupinfo() as $val){
+			$result2[] = array(
+				'name' => $val['name'],
+				'value' => D('member')->where(array('groupid'=>$val['groupid']))->total()
+			);
+		}
+		$result2 = json_encode($result2);
 		include $this->admin_tpl('member_count');
 	}
 	
@@ -435,13 +500,10 @@ class member extends common{
 	 * 在线充值
 	 */	
 	public function recharge(){ 
-		if(isset($_POST['dosubmit'])) {
-			$username = isset($_POST['username']) && is_username($_POST['username']) ? trim($_POST['username']) : showmsg(L('user_name_format_error'));
-			
+		if(is_post()) {
+			$username = isset($_POST['username']) ? trim($_POST['username']) : return_json(array('status'=>0, 'message'=>L('user_name_format_error')));
 			$userinfo = D('member')->field('userid,email')->where(array('username'=>$username))->find();
-			
 			if($userinfo){
-				
 				if($_POST['unit']) {
 					M('point')->point_add($_POST['type'], floatval($_POST['money']), 4, $userinfo['userid'], $username, 0, $_POST['remarks'], $_SESSION['adminname'], false);
 				}else{
@@ -456,14 +518,51 @@ class member extends common{
 				}
 				
 				$op = $_POST['unit'] == '1' ? 'pay' : 'pay_spend';
-				showmsg(L('operation_success'), U($op), 2);
+				return_json(array('status'=>1, 'message'=>L('operation_success'), 'url'=>U($op)));
 			}else{
-				showmsg(L('operation_failure'));
+				return_json(array('status'=>0, 'message'=>L('user_does_not_exist')));
 			}
 		    
-		}else{	
+		}else{
+			$username = isset($_GET['username']) ? htmlspecialchars($_GET['username']) : '';	
 			include $this->admin_tpl('recharge');
 		}
+	}
+
+
+
+	/**
+	 * 登录会员中心
+	 */	
+	public function login_user(){
+		$userid = isset($_GET['userid']) ? intval($_GET['userid']) : showmsg(L('lose_parameters'), 'stop');
+		if(!isset($_GET['yzm_csrf_token']) || $_SESSION['yzm_csrf_token'] != $_GET['yzm_csrf_token']) showmsg(L('token_error'), 'stop');
+		$data = D('member')->field('userid,username,groupid,status')->where(array('userid'=>$userid))->find();
+		if(!$data) showmsg('该用户不存在！', 'stop');
+		$_SESSION['_userid'] = $data['userid'];
+		$_SESSION['_username'] = $data['username'];
+		set_cookie('_userid', $data['userid'], 0, true);
+		set_cookie('_username', $data['username'], 0, true);
+		set_cookie('_groupid', $data['groupid'], 0, true);			
+		set_cookie('_nickname', $data['username']);
+		showmsg(L('login_success'), U('member/index/init'), 1);
+	}
+
+
+	/**
+	 * 根据用户名获取用户信息
+	 */	
+	public function public_memberinfo(){
+		$username = isset($_POST['username']) ? trim($_POST['username']) : return_json(array('status'=>0, 'message'=>L('lose_parameters')));
+		$status = 1;
+		$where = array('username'=>$username);
+		if(is_email($username)){
+			$status = 2;
+			$where = array('email'=>$username);
+		}
+		$userinfo = D('member')->field('userid,username,email,regdate,lastdate,groupid,experience,amount,point,vip,overduedate')->where($where)->find();
+		if(!$userinfo) return_json(array('status'=>0, 'message'=>L('user_does_not_exist')));
+		return_json(array('status'=>$status, 'message'=>L('operation_success'), 'data'=>$userinfo));
 	}
 
 	

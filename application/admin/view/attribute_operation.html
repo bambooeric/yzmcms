@@ -1,33 +1,50 @@
 <?php include $this->admin_tpl('meta', 'admin');?>
-<title>内容属性操作 - YzmCMS内容管理系统</title>
+<title>内容属性/状态操作 - YzmCMS内容管理系统</title>
 </head>
 <body>
 <article class="page-container">
-
     <form class="form form-horizontal" onsubmit="return dosub(this)" method="post">
+		<?php if($t==1){ ?>
 		<div class="row cl">
-			<label class="form-label col-xs-3"><span class="c-red">*</span>属性：</label>
+			<label class="form-label col-xs-3"><span class="c-red">*</span>变更类型：</label>
 			<div class="formControls col-xs-8 col-sm-9">
-                <label>置顶[1] <input name="flag[]" type="checkbox" value="1"/></label>&nbsp;&nbsp;
-                <label>头条[2] <input name="flag[]" type="checkbox" value="2"/></label>&nbsp;&nbsp;
-                <label>特荐[3] <input name="flag[]" type="checkbox" value="3"/></label>&nbsp;&nbsp;
-                <label>推荐[4] <input name="flag[]" type="checkbox" value="4"/></label>&nbsp;&nbsp;
-                <label>热点[5] <input name="flag[]" type="checkbox" value="5"/></label>&nbsp;&nbsp;
-                <label>幻灯[6] <input name="flag[]" type="checkbox" value="6"/></label>
+				<label class="radio mr-10"><input type="radio" name="op" value="1"> 新增属性</label>
+				<label class="radio"><input type="radio" name="op" value="0"> 删除属性</label>
 			</div>
 		</div>
 		<div class="row cl">
-			<label class="form-label col-xs-3"><span class="c-red">*</span>内容ID：</label>
+			<label class="form-label col-xs-3"><span class="c-red">*</span>选择属性：</label>
 			<div class="formControls col-xs-8 col-sm-9">
-				<input type="text" class="input-text" value=""  name="ids" id="ids">
-				<input type="hidden" class="input-text" value="<?php echo $modelid; ?>"  name="modelid">
-				<input type="hidden" class="input-text" value="<?php echo $op; ?>"  name="op">
-				<input type="hidden" class="input-text" value="1"  name="dosubmit">
+				<label class="mr-10">置顶[1] <input name="flag[]" type="checkbox" value="1"/></label>
+				<label class="mr-10">头条[2] <input name="flag[]" type="checkbox" value="2"/></label>
+				<label class="mr-10">特荐[3] <input name="flag[]" type="checkbox" value="3"/></label>
+				<label class="mr-10">推荐[4] <input name="flag[]" type="checkbox" value="4"/></label><br>
+				<label class="mr-10">热点[5] <input name="flag[]" type="checkbox" value="5"/></label>
+				<label class="mr-10">幻灯[6] <input name="flag[]" type="checkbox" value="6"/></label>
 			</div>
 		</div>
-		<div style="margin-top:20px;margin-left:10px">
-                <button name="dosubmit" class="btn btn-primary radius" type="submit">&nbsp;&nbsp;确定&nbsp;&nbsp;</button>&nbsp;&nbsp;&nbsp;&nbsp;
-				<button onclick="yzmcms_close()" class="btn btn-default radius" type="button">&nbsp;&nbsp;关闭&nbsp;&nbsp;</button>
+		<?php }else{ ?>
+		<div class="row cl">
+			<label class="form-label col-xs-3"><span class="c-red">*</span>内容状态：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<label class="radio mr-10"><input type="radio" name="status" value="1"> 正常</label>
+				<label class="radio"><input type="radio" name="status" value="0"> 草稿</label>
+			</div>
+		</div>
+		<div class="row cl">
+			<label class="form-label col-xs-3"><span class="c-red">*</span>更新时间：</label>
+			<div class="formControls col-xs-8 col-sm-9 yzm-explain-box">
+				<label class="radio mr-10"><input type="radio" name="edit_updatetime" checked value="1"> 此时此刻</label>
+				<label class="radio"><input type="radio" name="edit_updatetime" value="0"> 不做修改</label>
+				<span class="yzm-explain">此时此刻：内容的更新时间改为此时此刻<br>不做修改：内容的更新时间不做修改</span>
+			</div>
+		</div>
+		<?php } ?>
+		<div class="footer_btn">
+			<input type="hidden" class="input-text" value=""  name="ids" id="ids">
+			<input type="hidden" class="input-text" value="<?php echo $modelid; ?>" name="modelid">
+			<input class="btn btn-primary radius" type="submit" value="确 定">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
 		</div>
     </form>
 
@@ -37,19 +54,21 @@
 <script type="text/javascript">
 function dosub(obj){
 	if($("input[name='ids']").val()==''){
-		layer.msg('内容ID不能为空！');
+		layer.msg('内容ID不能为空！', {icon:2});
 		return false;
 	}
 	$.ajax({
 		type: 'POST',
-		url: '<?php echo U('attribute_operation')?>', 
+		url: '<?php echo U(ROUTE_A)?>', 
 		data: $(obj).serialize(),
 		dataType: "json", 
 		success: function (msg) {
 			if(msg.status == 1){
-				parent.location.reload();       
-			}else{
-				layer.msg(msg.message);
+				layer.msg(msg.message, {icon:1, time:800}, function(){
+					parent.location.reload();
+				});
+		    }else{
+				layer.msg(msg.message, {icon:2});
 			}
 		}
 	})

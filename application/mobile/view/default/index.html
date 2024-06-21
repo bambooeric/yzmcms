@@ -5,13 +5,14 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, maximum-scale=1.0, initial-scale=1.0, user-scalable=no">
     <title>{$seo_title}</title>
-    <link href="{STATIC_URL}css/yzm-mobile-index.css?v=yzmcms" rel="stylesheet" type="text/css" />
-    <script type="text/javascript" src="{STATIC_URL}js/jquery-1.8.2.min.js"></script>
-    <script type="text/javascript" src="{STATIC_URL}js/mobile_simpler-sidebar.min.js"></script>
-    <script type="text/javascript" src="{STATIC_URL}js/mobile_scroll.js"></script>
-    <script type="text/javascript" src="{STATIC_URL}js/mobile_scrollload.js"></script>
+    <meta name="author" content="YzmCMS内容管理系统">
     <meta name="keywords" content="{$keywords}" />
     <meta name="description" content="{$description}" />
+    <link href="{STATIC_URL}css/yzm-mobile-index.css?v=yzmcms" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="{STATIC_URL}js/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="{STATIC_URL}js/yzm-mobile-simpler-sidebar.min.js"></script>
+    <script type="text/javascript" src="{STATIC_URL}js/yzm-mobile-scroll.js"></script>
+    <script type="text/javascript" src="{STATIC_URL}js/yzm-mobile-scrollload.js"></script>
 </head>
 
 <body>
@@ -57,7 +58,7 @@
                 <h3 class="yzm-title">【小编推荐】</h3>
                 <ul>
                     <!-- 此处为功能演示，调取内容属性为“推荐”的内容 -->
-                    {m:lists field="id,catid,title,color" modelid="1" flag="3" limit="10"}
+                    {m:lists field="id,catid,title,color" modelid="1" flag="4" limit="10"}
                     {loop $data $v}
                     <li><a href="{mobile_url($v['catid'], $v['id'])}" title="{$v[title]}">{title_color($v['title'], $v['color'])}</a></li>
                     {/loop}
@@ -68,7 +69,7 @@
                 <ul>
                     <!-- 此处仅为功能演示，调用模型ID为1且有缩略图的内容 -->
                     {m:lists field="id,catid,title,thumb" modelid="1" thumb="1" limit="6"}
-                    {loop $data $k=>$v}
+                    {loop $data $v}
                     <li>
                     	<a href="{mobile_url($v['catid'], $v['id'])}"><img src="{$v[thumb]}" alt="{$v[title]}" title="{$v[title]}">
                             <p>{$v[title]}</p>

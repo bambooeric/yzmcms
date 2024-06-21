@@ -2,35 +2,35 @@
 <title>SQL命令行 - YzmCMS内容管理系统</title>
 </head>
 <body>
-<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 系统管理 <span class="c-gray en">&gt;</span> SQL命令行 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<nav class="breadcrumb"><i class="yzm-iconfont yzm-iconai-home"></i> 首页 <span class="c-gray en">&gt;</span> 系统管理 <span class="c-gray en">&gt;</span> SQL命令行 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="yzm-iconfont yzm-iconshuaxin"></i></a></nav>
 <div class="page-container">
-    <div class="explain"> 
-       <p>注意：<span class="c-red">执行SQL将直接操作数据库，请谨慎使用</span>（表前缀可用“yzmcms_”代替）.</p>
+    <div class="explain explain-error light"> 
+    	<p><span class="yzm-iconfont yzm-iconshuoming"></span>执行SQL将直接操作数据库，请谨慎使用，（表前缀可用“yzmcms_”代替）.</p>
     </div>
-	<div class="formdoby_normal mt-20"> 
+	<div class="formdoby_normal mt-15"> 
 		<form method="post" action="<?php echo U('do_sql');?>" name="myform" id="myform" onsubmit="return check_all()">
 			<ul>
 				 <li>
-				  <textarea class="textarea" name="sqlstr"><?php if(isset($sqlstr)) echo $sqlstr;?></textarea>
-				  <input type="hidden" name="action" value="many" id="action">
+				  	<textarea class="textarea" name="sqlstr" placeholder="请输入SQL命令" style="height:300px" ><?php if(isset($sqlstr)) echo $sqlstr;?></textarea>
+				  	<input type="hidden" name="action" value="many" id="action">
 				 </li>
 				 <li>
-				 <input class="dosubmit w_120 btn-primary radius" name="single" onclick="setacton('single')" type="submit" value="执行单条SQL">
-				 <input class="dosubmit w_120 btn-success radius" name="many" onclick="setacton('many')" type="submit" value="执行多条SQL"> 
+					 <input class="dosubmit w_120 btn-primary radius" name="single" onclick="setacton('single')" type="submit" value="执行单条SQL">
+					 <input class="dosubmit w_120 btn-success radius" name="many" onclick="setacton('many')" type="submit" value="执行多条SQL"> 
 				 </li>
 			</ul>
 		</form>
 		<?php if(isset($str)){?>
 		<div class="mt-20">
 		<?php 
-		if(isset($data) && is_array($data)){
-			if(!empty($data)){
+		if(is_array($result)){
+			if(!empty($result)){
 		?>
-			<table class="table table-border table-bordered table-bg table-hover">
+			<table class="table table-border table-bg table-hover">
 				<thead>
 				<tr>
 					<?php 
-					$keys = array_keys($data[0]);
+					$keys = array_keys($result[0]);
 					foreach($keys as $val){
 						echo '<th>'.$val.'</th>';
 					}
@@ -40,7 +40,7 @@
 				</thead>
 				<tbody>				
 				<?php 
-				foreach($data as $row){
+				foreach($result as $row){
 					echo '<tr>';
 					foreach($row as $val){
 						echo '<td>'.$val.'</td>';
@@ -71,13 +71,13 @@ function setacton(action){
 function check_all(){
 		var sqlstr = document.myform.sqlstr.value;
 		if(sqlstr==""){
-			layer.msg("SQL不能为空！");
+			layer.msg("请输入SQL命令！", {icon:2});
 			return false;
 		}
 		var reg = /^delete/i;	
 		var reg2 = /^(.*)where(.*)/i;	
 		if(reg.test(sqlstr) && !reg2.test(sqlstr) ){
-			layer.confirm('检测到delete语句没有加where条件，是否继续？',function(index){
+			layer.confirm('检测到delete语句没有加where条件，是否继续？', {title:"操作提示",icon:0}, function(index){
 				document.getElementById('myform').submit();
 			});
 			return false;

@@ -6,16 +6,19 @@
 <div class="formdoby_normal"> 
 	<form method="post" onsubmit="return dosub(this)">
 		<ul>
-			 <li><label>添加TAG：</label><span class="span_input"><span class="c-red">*支持添加多个，每个tag之间请用逗号分隔</span></span></li>	
+			 <li><label>绑定栏目：</label>
+			 	<?php echo select_category('catid', 0, '≡ 全站通用 ≡', 0, 'style="width:auto"'); ?>
+			 </li>	
+			 <li><label>添加TAG：</label><span class="span_input c-red"><i class="yzm-iconfont yzm-iconshuoming"></i> 支持添加多个，每个tag之间请用逗号分隔</span></li>	
 			 <li><label>TAG名称：</label>
-			 	<span class="span_input"><textarea name="tags" class="textarea" style="width:75%"></textarea></span>
-			 </li>					 
-			<li>
-				<input type="hidden" name="dosubmit" value="1">
-				<input class="dosubmit w_120 btn-primary radius" type="submit" value="提交">
-			 	<input class="btn w_120 btn-default radius" type="button" value="取消" onclick="yzmcms_close()">
-			</li>
+			 	<span class="span_input"><textarea name="tags" class="textarea" style="width:75%" placeholder="每个tag名称之间,分隔" ></textarea></span>
+			 </li>
 		</ul>
+		<div class="footer_btn">
+			<input type="hidden" name="dosubmit" value="1">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
+		</div>
 	</form>
 </div>
 </article>
@@ -24,7 +27,7 @@
 <script type="text/javascript">
 	function dosub(obj){	
 		 if(obj.tags.value==''){
-			 layer.msg('请输入TAG名称！');
+			 layer.msg('请输入TAG名称！', {icon:2});
 			 return false;
 		 }
         $.ajax({
@@ -34,9 +37,11 @@
 		    dataType: "json", 
             success: function (msg) {
 				if(msg.status == 1){
-					parent.location.reload();       
+					layer.msg(msg.message, {icon:1, time:800}, function(){
+						parent.location.reload();
+					});
 			    }else{
-					layer.msg(msg.message);
+					layer.msg(msg.message, {icon:2});
 				}
             }
         })		 

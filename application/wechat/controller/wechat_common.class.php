@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 
@@ -8,7 +18,7 @@ class wechat_common extends common{
 	protected $secret;
 	
 
-	function __construct() {
+	public function __construct() {
 		
 		parent::__construct();
 		
@@ -35,9 +45,14 @@ class wechat_common extends common{
 		if(!$access_token = getcache('wechat_access_token')){
 			$url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$this->appid.'&secret='.$this->secret;
 
-			$access_token = $this->https_request($url);
+			$access_token = https_request($url);
 			
-			if(isset($access_token['errcode'])) showmsg('获取access_token失败！errmsg：'.$access_token['errmsg'], 'stop');
+			if(isset($access_token['errcode'])) {
+				if(is_ajax()){
+					return_json(array('status'=>0,'message'=>'获取access_token失败！ErrMsg：'.$access_token['errmsg']));
+				}
+				showmsg('获取access_token失败！ErrMsg：'.$access_token['errmsg'], 'stop');
+			}
 			
 			setcache('wechat_access_token', $access_token, 7000);
 		}	
@@ -55,7 +70,7 @@ class wechat_common extends common{
 				if(!is_array($value)){
 					$jsonstr[$key] = urlencode($value);
 				}else{
-					$jsonstr[$key] = urlencode(my_json_encode($value));
+					$jsonstr[$key] = urlencode($this->my_json_encode($value));
 				}
 			}  
 			$jsonstr = urldecode(json_encode($jsonstr)); 
@@ -65,25 +80,5 @@ class wechat_common extends common{
 		}	
 		return $jsonstr;
 	}
-
-
-
-    /**
-     *  https请求，支持get与post
-     */
-	protected function https_request($url, $data = '', $array = true){
-		$curl = curl_init($url);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
-		if($data){
-			curl_setopt($curl, CURLOPT_POST, 1);
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-		}
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		$output = curl_exec($curl);
-		curl_close($curl);
-		return $array ? json_decode($output, true) : $output;
-	}
-
 
 }

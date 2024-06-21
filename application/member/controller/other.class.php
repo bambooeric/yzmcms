@@ -6,15 +6,15 @@
  * @lastmodify       2018-10-21
  */
  
-session_start();
 defined('IN_YZMPHP') or exit('Access Denied'); 
+new_session_start();
 
 class other{
 
 	
 	public function __construct() {
 		//设置会员模块模板风格
-		set_module_theme('default');
+		set_module_theme(get_config('member_theme'));
 	}
 
 	
@@ -159,10 +159,10 @@ class other{
 		
 		$_SESSION['_userid'] = $data['userid'];
 		$_SESSION['_username'] = $data['username'];
-		set_cookie('_userid', $data['userid']);
-		set_cookie('_username', $data['username']);
+		set_cookie('_userid', $data['userid'], 0, true);
+		set_cookie('_username', $data['username'], 0, true);
+		set_cookie('_groupid', $data['groupid'], 0, true);
 		set_cookie('_nickname', $data['username']);
-		set_cookie('_groupid', $data['groupid']);
 		
 		$where = '';
 		if($data['vip'] && $data['overduedate']<SYS_TIME)	$where .= '`vip`=0,';   //如果用户是vip用户，检查vip是否过期

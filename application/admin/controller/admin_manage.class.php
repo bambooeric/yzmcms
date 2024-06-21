@@ -1,6 +1,17 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
+yzm_base::load_sys_class('page','',0);
 
 class admin_manage extends common {
 
@@ -8,12 +19,35 @@ class admin_manage extends common {
 	 * 管理员管理列表
 	 */
 	public function init() {
+		$of = input('get.of');
+		$or = input('get.or');
+		$of = in_array($of, array('adminid','adminname','realname','email','roleid','addtime','logintime','loginip','addpeople')) ? $of : 'adminid';
+		$or = in_array($or, array('ASC','DESC')) ? $or : 'DESC';
 		$roleid = isset($_GET['roleid']) ? intval($_GET['roleid']) : 0;
-		if(!$roleid){
-			$data = D('admin')->order('adminid ASC')->select();
-		}else{
-			$data = D('admin')->where(array('roleid' => $roleid))->order('adminid ASC')->select();	
+		$where = $roleid ? array('roleid' => $roleid) : array();
+		if(isset($_GET['dosubmit'])){	
+			$type = isset($_GET['type']) ? intval($_GET['type']) : 1;
+			$searinfo = isset($_GET['searinfo']) ? safe_replace(trim($_GET['searinfo'])) : '';
+			if(isset($_GET['start']) && isset($_GET['end']) && $_GET['start']) {
+				$where['addtime>='] = strtotime($_GET['start']);
+				$where['addtime<='] = strtotime($_GET['end']);
+			}
+			if($searinfo){
+				if($type == '1')
+					$where['adminname'] = '%'.$searinfo.'%';
+				elseif($type == '2')
+					$where['email'] = '%'.$searinfo.'%';
+				elseif($type == '3')
+					$where['realname'] = '%'.$searinfo.'%';
+				else
+					$where['addpeople'] = '%'.$searinfo.'%';
+			}			
 		}
+		$admin = D('admin');
+		$total = $admin->where($where)->total();
+		$page = new page($total, 15);
+		$data = $admin->where($where)->order("$of $or")->limit($page->limit())->select();
+		$role_data = D('admin_role')->field('roleid,rolename')->where(array('disabled'=>0))->order('roleid ASC')->limit(100)->select();
 		
 		include $this->admin_tpl('admin_list');
 	}
@@ -23,12 +57,13 @@ class admin_manage extends common {
 	 * 删除管理员
 	 */
 	public function delete() {
+		if(!isset($_GET['yzm_csrf_token']) || !check_token($_GET['yzm_csrf_token'])) return_message(L('token_error'), 0);
 		$adminid = intval($_GET['adminid']);
-		if($adminid == '1' || $adminid == $_SESSION['adminid']) showmsg('不能删除ID为1的管理员，或不能删除自己！', 'stop');
+		if($adminid == '1' || $adminid == $_SESSION['adminid']) return_json(array('status'=>0,'message'=>'不能删除ID为1的管理员，或不能删除自己！'));
 		$roleid = D('admin')->field('roleid')->where(array('adminid'=>$adminid))->one();
-		if($roleid < $_SESSION['roleid']) showmsg('无权删除该管理员！', 'stop');
+		if($roleid < $_SESSION['roleid']) return_json(array('status'=>0,'message'=>'无权删除该管理员！'));
 		D('admin')->delete(array('adminid'=>$adminid));
-		showmsg(L('operation_success'));
+		return_json(array('status'=>1,'message'=>L('operation_success')));
 	}
 	
 	
@@ -40,10 +75,6 @@ class admin_manage extends common {
 		$admin_role = D('admin_role');
 		$roles = $admin_role->where(array('disabled'=>'0'))->select();
 		if(isset($_POST['dosubmit'])) { 
-			if(!check_token($_POST['token'])){
-				return_json(array('status'=>0,'message'=>'TOKEN'.L('error')));
-			}
-
 			if($_POST['roleid'] < $_SESSION['roleid']) return_json(array('status'=>0,'message'=>'您无权添加该角色管理员，请更换角色'));
 			
 			if(!is_username($_POST["adminname"]))  return_json(array('status'=>0,'message'=>L('user_name_format_error')));
@@ -76,10 +107,6 @@ class admin_manage extends common {
 		$admin_role = D('admin_role');
 		$roles = $admin_role->where(array('disabled'=>'0'))->select();
 		if(isset($_POST['dosubmit'])) {
-			if(!check_token($_POST['token'])){
-				return_json(array('status'=>0,'message'=>'TOKEN'.L('error')));
-			}
-
 			$adminid = isset($_POST['adminid']) ? intval($_POST['adminid']) : 0;
 			$roleid = $admin->field('roleid')->where(array('adminid'=>$adminid))->one();
 			if($roleid < $_SESSION['roleid']) return_json(array('status'=>0,'message'=>'您无权编辑该管理员.'));
@@ -149,7 +176,12 @@ class admin_manage extends common {
 			if(!$admin->where(array('adminid' => $adminid,'password' => password($_POST['old_password'])))->find()) 
 				return_json(array('status'=>0,'message'=>'旧密码不正确！'));
 
+			if(!is_password($_POST["password"])) return_json(array('status'=>0,'message'=>L('password_format_error')));
+
 			if($admin->update(array('password' => password($_POST['password'])), array('adminid' => $adminid))){
+				if(!get_config('admin_log')){
+					D('admin_log')->insert(array('module'=>ROUTE_M,'controller'=>ROUTE_C,'adminname'=>$_SESSION['adminname'],'adminid'=>$_SESSION['adminid'],'querystring'=>'修改密码','logtime'=>SYS_TIME,'ip'=>self::$ip));
+				}				
 				session_destroy();
 				del_cookie('adminid');
 				del_cookie('adminname');

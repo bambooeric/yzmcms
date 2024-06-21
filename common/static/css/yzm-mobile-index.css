@@ -1,13 +1,13 @@
 @charset "utf-8";
 /**
- * YZMCMS 内容管理系统
+ * YZMCMS 内容管理系统(yzm-cms轻量级开源CMS)
  * @author           袁志蒙  
  * @license          http://www.yzmcms.com
  */
 /* CSS Document */
 
 *{padding:0px;margin:0px;box-sizing:border-box;}
-body{font-size:14px;font-family:Verdana,Tahoma,Helvetica,Arial,sans-serif;line-height:22px;background:#f8f8f8;}
+body{font-size:14px;font-family:Tahoma,Arial,sans-serif;line-height:22px;background:#f8f8f8;}
 div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,button,textarea,p,blockquote,th,td{margin:0px;padding:0px;}
 table{border-collapse:collapse;}
 a,img{border:0;}
@@ -53,8 +53,8 @@ a:hover{color:#2196f3;}
 .yzm-title{background:#eee;font-weight:normal;height:40px;line-height:40px;border-top:#2196f3 2px solid;font-size:16px}
 .yzm-title a{color:#123261;}
 .yzm-news-img{overflow:hidden;margin-bottom:10px;}
-.yzm-news-img ul li{width:50%;float:left;height:135px;padding:10px 10px;text-align:center;}
-.yzm-news-img ul li img{width:100%;height:90px;}
+.yzm-news-img ul li{width:50%;float:left;height:175px;padding:10px 10px;text-align:center;}
+.yzm-news-img ul li img{width:100%;height:120px;}
 .yzm-news-img ul li p{color:#444;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 .yzm-back{height:35px;width:35px;position:fixed;bottom:50px;right:10px;z-index:999}

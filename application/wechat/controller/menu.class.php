@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('wechat_common', 'wechat', 0);
 
@@ -80,13 +90,13 @@ class menu extends wechat_common{
 	 * 菜单排序
 	 */
 	public function order() {
-		$wechat_menu = D('wechat_menu');
-		if(isset($_POST["dosubmit"])){
+		if(isset($_POST['id']) && is_array($_POST['id'])){
+			$wechat_menu = D('wechat_menu');
 			foreach($_POST['id'] as $key=>$val){
 				$wechat_menu->update(array('listorder'=>$_POST['listorder'][$key]),array('id'=>intval($val)));
 			}
-			showmsg(L('operation_success'),'',1);
 		}
+		showmsg(L('operation_success'), '', 1);
 	}
 	
 
@@ -120,12 +130,12 @@ class menu extends wechat_common{
 		
 		$str = $this->my_json_encode($arr);
         $url = 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$this->get_access_token();
-        $json_arr = $this->https_request($url, $str);
+        $json_arr = https_request($url, $str);
 
 		if($json_arr['errcode'] == 0){
-			showmsg('操作成功，请清除微信端缓存后查看！', 'stop');
+			return_json(array('status'=>1,'message'=>'操作成功，请清除微信端缓存后查看！'));
 		}else{
-			showmsg(L('operation_failure').$json_arr['errmsg'], 'stop');
+			return_json(array('status'=>0,'message'=>L('operation_failure').$json_arr['errmsg']));
 		}
     }
 
@@ -137,7 +147,7 @@ class menu extends wechat_common{
 	public function select_menu(){
  
         $url = 'https://api.weixin.qq.com/cgi-bin/menu/get?access_token='.$this->get_access_token();
-        $json_arr = $this->https_request($url);
+        $json_arr = https_request($url);
 		
 		P($json_arr);
     }
@@ -150,13 +160,13 @@ class menu extends wechat_common{
 	public function delete_menu(){
  
         $url = 'https://api.weixin.qq.com/cgi-bin/menu/delete?access_token='.$this->get_access_token();
-        $json_arr = $this->https_request($url);
+        $json_arr = https_request($url);
 		
 		if($json_arr['errcode'] == 0){
 			D('wechat_menu')->delete(array('1' => 1));
-			showmsg(L('operation_success'), U('init'), 1);
+			return_json(array('status'=>1,'message'=>L('operation_success')));
 		}else{
-			showmsg(L('operation_failure').$json_arr['errmsg'], 'stop');
+			return_json(array('status'=>0,'message'=>L('operation_failure').$json_arr['errmsg']));
 		}
 		
     }

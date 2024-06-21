@@ -31,11 +31,18 @@
 					<label class="form-label col-xs-4 col-sm-2">栏目图片：</label>
 					<div class="formControls col-xs-8 col-sm-9">
 						<input class="input-text" type="text" name="catimg" style="width:400px" id="uploadfile" value="<?php echo $data['catimg']; ?>" onmouseover="yzm_img_preview('uploadfile', this.value)"  onmouseout="layer.closeAll();">
-						<a href="javascript:;" onclick="yzm_upload_att('<?php echo U('attachment/api/upload_box', array('module'=>ROUTE_M));?>')" class="btn btn-primary radius upload-btn"><i class="Hui-iconfont">&#xe642;</i> 浏览文件</a>
+						<a href="javascript:;" onclick="yzm_upload_att('<?php echo U('attachment/api/upload_box', array('module'=>ROUTE_M));?>')" class="btn btn-primary radius upload-btn"><i class="yzm-iconfont yzm-iconshangchuan"></i> 浏览文件</a>
 					</div>
 				</div>
 				<div class="row cl">
-					<label class="form-label col-xs-4 col-sm-2">在导航显示：</label>
+					<label class="form-label col-xs-4 col-sm-2">打开方式：</label>
+					<div class="formControls col-xs-8 col-sm-9">
+						<label class="label_radio"><input name="target" type="radio" value="_self" <?php echo $data['target']=='_self' ? 'checked="checked"' : ''; ?>> 本窗口打开</label>
+						<label class="label_radio"><input name="target" type="radio" value="_blank" <?php echo $data['target']=='_blank' ? 'checked="checked"' : ''; ?>> 新窗口打开</label>
+					</div>
+				</div>
+				<div class="row cl">
+					<label class="form-label col-xs-4 col-sm-2">导航显示：</label>
 					<div class="formControls col-xs-8 col-sm-9">
 						<label class="label_radio"><input name="display" type="radio" value="1" <?php echo $data['display']==1 ? 'checked="checked"' : ''; ?>> 是</label>
 						<label class="label_radio"><input name="display" type="radio" value="0" <?php echo $data['display']==0 ? 'checked="checked"' : ''; ?>> 否</label>
@@ -43,6 +50,12 @@
 				</div>		
 			</div>
 			<div class="tabCon">
+				<div class="row cl">
+					<label class="form-label col-xs-4 col-sm-2">英文标题：</label>
+					<div class="formControls col-xs-8 col-sm-9">
+						<input type="text" name="entitle" value="<?php echo $data['entitle']; ?>" placeholder="英文标题可留空" class="input-text">
+					</div>
+				</div>
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目副标题：</label>
 					<div class="formControls col-xs-8 col-sm-9">
@@ -56,26 +69,21 @@
 					</div>
 				</div>
 				<div class="row cl">
-					<label class="form-label col-xs-4 col-sm-2">手机版地址：</label>
-					<div class="formControls col-xs-8 col-sm-9">
-						<input type="text" name="moblink" value="<?php echo $data['moblink']; ?>" placeholder="手机版栏目地址，为空则为系统默认" class="input-text">
-					</div>
-				</div>
-				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目排序：</label>
 					<div class="formControls col-xs-8 col-sm-9">
-						<input type="text" name="listorder" value="<?php echo $data['listorder']; ?>" class="input-text" style="width:200px">
+						<input type="text" name="listorder" value="<?php echo $data['listorder']; ?>" class="input-text">
 					</div>
 				</div>					
 			</div>
 
 		</div>
-		<div class="row cl">
-			<div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-2">
-				<input type="hidden" name="type" value="<?php echo $type;?>"><input type="hidden" name="dosubmit" value="1"><input type="hidden" name="catid" value="<?php echo $catid;?>"><input type="hidden" name="cpath" value="<?php echo $data['arrparentid'];?>">
-				<input class="dosubmit w_120 btn-primary radius" type="submit" value="提交">
-			 	<input class="btn w_120 btn-default radius h35" type="button" value="取消" onclick="yzmcms_close()">
-			</div>
+		<div class="footer_btn_large">
+			<input type="hidden" name="type" value="<?php echo $type;?>">
+			<input type="hidden" name="catid" value="<?php echo $catid;?>">
+			<input type="hidden" name="cpath" value="<?php echo $data['arrparentid'];?>">
+			<input type="hidden" name="dosubmit" value="1">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
 		</div>
 	</form>
 </div>
@@ -85,11 +93,11 @@
 <script type="text/javascript">
 function dosub(obj){
 	if($("input[name='catname']").val()==''){
-		layer.msg('栏目名称不能为空！');
+		layer.msg('栏目名称不能为空！', {icon:2});
 		return false;
 	}
 	if($("input[name='pclink']").val()==''){
-		layer.msg('链接地址不能为空！');
+		layer.msg('链接地址不能为空！', {icon:2});
 		return false;
 	}
 	$.ajax({
@@ -99,9 +107,11 @@ function dosub(obj){
 		dataType: "json", 
 		success: function (msg) {
 			if(msg.status == 1){
-				parent.location.reload();       
+				layer.msg(msg.message, {icon:1,time:1000}, function(){
+					parent.location.reload();   
+				});
 			}else{
-				layer.msg(msg.message);
+				layer.msg(msg.message, {icon:2});
 			}
 		}
 	})

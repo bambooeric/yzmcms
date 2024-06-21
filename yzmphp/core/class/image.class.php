@@ -29,6 +29,8 @@ class image {
 		$this->watermark_enable = $watermark_enable;
 		$this->w_pos = C('watermark_position');
 		$this->w_img = YZMPHP_PATH.'common/data/water/'.C('watermark_name');
+		$this->w_minwidth = get_config('watermark_minwidth');
+		$this->w_minheight = get_config('watermark_minheight');
     }
 
 	public function set($w_img, $w_pos, $w_minwidth = 300, $w_minheight = 300, $w_quality = 90, $w_pct = 100) {
@@ -130,10 +132,24 @@ class image {
 			imagecopyresampled($thumbimg, $srcimg, 0, 0, $psrc_x, $psrc_y, $width, $height, $srcwidth, $srcheight); 
 		else
 			imagecopyresized($thumbimg, $srcimg, 0, 0, $psrc_x, $psrc_y, $width, $height,  $srcwidth, $srcheight); 
+
 		if($type=='gif' || $type=='png') {
-			$background_color  =  imagecolorallocate($thumbimg,  0, 255, 0);  //  指派一个绿色  
-			imagecolortransparent($thumbimg, $background_color);  //  设置为透明色，若注释掉该行则输出绿色的图 
+		    $thumbimg = imagecreatetruecolor($createwidth, $createheight); 
+
+		    // 设置透明背景
+		    $background_color = imagecolorallocatealpha($thumbimg, 255, 255, 255, 127);
+		    imagefill($thumbimg, 0, 0, $background_color);
+
+		    // 保存透明通道信息
+		    imagesavealpha($thumbimg, true);
+
+		    if (function_exists('imagecopyresampled')) {
+		        imagecopyresampled($thumbimg, $srcimg, 0, 0, $psrc_x, $psrc_y, $createwidth, $createheight, $srcwidth, $srcheight); 
+		    } else {
+		        imagecopyresized($thumbimg, $srcimg, 0, 0, $psrc_x, $psrc_y, $createwidth, $createheight,  $srcwidth, $srcheight); 
+		    }
 		}
+		
 		if($type=='jpg' || $type=='jpeg') imageinterlace($thumbimg, $this->interlace);
 		$imagefun = 'image'.($type=='jpg' ? 'jpeg' : $type);
 		if(empty($filename)) $filename  = substr($image, 0, strrpos($image, '.')).$suffix.'.'.$type;
@@ -155,15 +171,15 @@ class image {
      * @param   integer $x      裁剪区域x坐标
      * @param   integer $y      裁剪区域y坐标
      */
-    public function crop($image, $filename = '', $w, $h, $x = 0, $y = 0 ){
+    public function crop($image, $filename, $w, $h, $x = 0, $y = 0 ){
 		if(!$this->check($image)) return false;
+		$w = round($w);
+		$h = round($h);
+		$x = round($x);
+		$y = round($y);
 		$filename = $filename ? $filename : $image;
 		$filepath = rtrim(dirname($filename), '/').'/';
-		if(!is_dir($filepath)){
-			if(!@mkdir($filepath, 0755, true)){
-				return false;
-			}
-		}
+		if(!is_dir($filepath) && !mkdir($filepath, 0755, true)) return false;
 		$info  = self::info($image);
         if($info === false) return false;
 		$pathinfo = pathinfo($image);
@@ -183,7 +199,7 @@ class image {
 
 		if($type=='jpg' || $type=='jpeg') imageinterlace($thumbimg, $this->interlace);
 		$imagefun = 'image'.($type=='jpg' ? 'jpeg' : $type);
-		if(empty($filename)) $filename  = substr($image, 0, strrpos($image, '.')).$suffix.'.'.$type;
+		if(empty($filename)) $filename  = substr($image, 0, strrpos($image, '.')).'.'.$type;
 		$imagefun($thumbimg, $filename);
 		imagedestroy($thumbimg);
 		imagedestroy($srcimg);
@@ -204,7 +220,7 @@ class image {
 	 */
 	public function watermark($source, $target = '', $w_pos = '', $w_img = '', $w_text = 'yzmcms', $w_font = 8, $w_color = '#ff0000') {
 		$w_pos = $w_pos ? $w_pos : $this->w_pos;
-		$w_img = $w_img ? YZMPHP_PATH.'common/data/water/'.$w_img : $this->w_img;
+		$w_img = $w_img ? $w_img : $this->w_img;
 		if(!$this->watermark_enable || !$this->check($source)) return false;
 		if(!$target) $target = $source;
 		$source_info = getimagesize($source);
@@ -220,6 +236,8 @@ class image {
 				break;
 			case 3 :
 				$source_img = imagecreatefrompng($source);
+				imagealphablending($source_img, true);
+    			imagesavealpha($source_img, true);
 				break;
 			default :
 				return false;

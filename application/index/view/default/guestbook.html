@@ -2,15 +2,16 @@
 <html>
   <head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	  <title>{$seo_title}</title>	  
+	  <title>{$seo_title}</title>	
+	  <meta name="author" content="YzmCMS内容管理系统">
+	  <meta name="keywords" content="{$keywords}" />
+	  <meta name="description" content="{$description}" />  
 	  <link href="{STATIC_URL}css/yzm-common.css" rel="stylesheet" type="text/css" />
 	  <link href="{STATIC_URL}css/yzm-style.css" rel="stylesheet" type="text/css" />
 	  <link href="{STATIC_URL}css/yzm-form.css" rel="stylesheet" type="text/css" />
 	  <script type="text/javascript" src="{STATIC_URL}js/jquery-1.8.2.min.js"></script>
 	  <script type="text/javascript" src="{STATIC_URL}js/yzm-front.js"></script>
 	  <script type="text/javascript" src="{STATIC_URL}plugin/layer/layer.js"></script>
-	  <meta name="keywords" content="{$keywords}" />
-	  <meta name="description" content="{$description}" />
   </head>
 <body>
 {m:include "index","header"}
@@ -36,13 +37,13 @@
 	            </td>
 	        </tr>
 	        <tr>
-	            <td class="yzm-table-title">电话<span class="red">*</span></td>
+	            <td class="yzm-table-title">电话</td>
 	            <td>
 	                <input type="text" value="" name="phone" class="yzm-input-text">
 	            </td>
 	        </tr>
 	        <tr>
-	            <td class="yzm-table-title">Email<span class="red">*</span></td>
+	            <td class="yzm-table-title">Email</td>
 	            <td>
 	                <input type="email" value="" name="email" class="yzm-input-text">
 	            </td>
@@ -60,9 +61,10 @@
 	            </td>
 	        </tr>
 	        <tr>
-	            <td class="yzm-table-title">留言内容</td>
+	            <td class="yzm-table-title">留言内容<span class="red">*</span></td>
 	            <td><textarea name="bookmsg" class="yzm-textarea"></textarea></td>
 	        </tr>
+	        {if $site['words_code']}
 	        <tr>
 	            <td class="yzm-table-title">验证码<span class="red">*</span></td>
 	            <td>
@@ -70,6 +72,7 @@
 	            	<img src="{U('api/index/code')}" onclick="this.src=this.src+'?'" class="yzm-code" title="看不清？点击更换">
 	            </td>
 	        </tr>
+	        {/if}
 	        <tr>
 	            <td></td>
 	            <td><input type="submit" name="dosubmit" value="确认提交" class="yzm-submit"></td>
@@ -95,7 +98,7 @@
 				  	<strong>内容</strong>：{$v[bookmsg]}</p>
 					<!-- 管理员回复 start -->
 					{loop $v['admin_reply'] $v}
-						<p class="yzm-book-content"><strong style="color:#de4c1c">管理员回复</strong>：{$v[bookmsg]}</p>
+						<p class="yzm-book-content"><strong style="color:#de4c1c">管理员回复</strong>：{nl2br($v['bookmsg'])}</p>
 					{/loop}
 					<!-- 管理员回复 end -->
 			   </div>
@@ -118,12 +121,25 @@
 			if(obj.bookmsg.value==""){
 				layer.msg("留言内容不能为空！", {icon:2});
 				return false;
-			}
-			if(obj.code.value==""){
-				layer.msg("验证码不能为空！", {icon:2});
-				return false;
-			}		
-			return true;
+			}	
+			layer.msg('正在发布留言，请稍后……', {icon:16, time:0, shade:0.3});
+			$.ajax({
+				type: "POST",
+				url: "{U('guestbook/index/init')}", 
+				data: $(obj).serialize(),
+				dataType: "json", 
+				success: function (msg) {
+					if(msg.status == 1){
+						layer.msg(msg.message, {icon:1}, function(){
+							location.reload();
+						});
+					}else{
+						$(".yzm-code").attr('src',$(".yzm-code").attr('src') + '?' + Math.random());
+						layer.msg(msg.message, {icon:2});
+					}
+				}
+			})		 
+			return false;
 		}
 	</script>
 {m:include "index","footer"}

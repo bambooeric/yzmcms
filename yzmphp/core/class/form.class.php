@@ -25,6 +25,24 @@ class form {
 		$string .= ' type="text" value="'.$value.'">';
 		return $string;
 	}
+
+
+	/**
+	 * number 
+	 * @param $name name
+	 * @param $value 默认值 如：0
+	 * @param $required  是否为必填项 默认false
+	 * @param $width  宽度 如：100
+	 * @param $attribute 外加属性
+	 */
+	public static function number($name = '', $value = '', $required=false, $width = 0, $attribute='') {
+		$string = '<input class="yzm-input-text" ';
+		if($width) $string .= ' style="width:'.$width.'px" ';
+		if($required) $string .= ' required="required" ';
+		$string .= ' name="'.$name.'" id="'.$name.'" '.$attribute;
+		$string .= ' type="number" value="'.$value.'">';
+		return $string;
+	}
 		
 
 	/**
@@ -59,8 +77,11 @@ class form {
 		$ids = array();
 		if(isset($val)) $ids = explode(',', $val);
 		foreach($array as $value) {
-			$selected = in_array($value, $ids) ? 'selected' : '';
-			$string .= '<option value="'.$value.'" '.$selected.'>'.$value.'</option>';
+			$arr = explode(':', $value);
+			$key = trim($arr[0]);
+			$value = isset($arr[1]) ? $arr[1] : $arr[0];  
+			$selected = in_array($key, $ids) ? 'selected' : '';
+			$string .= '<option value="'.$key.'" '.$selected.'>'.$value.'</option>';
 		}
 		$string .= '</select>';
 		return $string;
@@ -75,15 +96,17 @@ class form {
 	 * @param $array 一维数组 如：array('交易成功', '交易失败', '交易结果未知');
 	 */
 	public static function checkbox($name, $val = '', $array = array()) {
-		$string = '';
+		$string = '<input type="hidden" name="'.$name.'" value="">';
 		$val = trim($val);
 		if($val != '') $val = strpos($val, ',') ? explode(',', $val) : array($val);
 		$i = 1;
 		foreach($array as $value) {
-			$value = trim($value);
-			$checked = ($val && in_array($value, $val)) ? 'checked' : '';
+			$arr = explode(':', $value);
+			$key = trim($arr[0]);
+			$value = isset($arr[1]) ? $arr[1] : $arr[0]; 
+			$checked = ($val && in_array($key, $val)) ? 'checked' : '';
 			$string .= '<label class="option_label option_box" >';
-			$string .= '<input type="checkbox" class="yzm-checkbox" name="'.$name.'[]" id="'.$name.'_'.$i.'" '.$checked.' value="'.$value.'">'.$value;
+			$string .= '<input type="checkbox" class="yzm-checkbox" name="'.$name.'[]" id="'.$name.'_'.$i.'" '.$checked.' value="'.$key.'">'.$value;
 			$string .= '</label>';
 			$i++;
 		}
@@ -98,12 +121,15 @@ class form {
 	 * @param $val 默认选中值 如：1
 	 * @param $array 一维数组 如：array('交易成功', '交易失败', '交易结果未知');
 	 */
-	public static function radio($name, $val = '', $array = array()) {
+	public static function radio($name, $val = 0, $array = array()) {
 		$string = '';
 		foreach($array as $value) {
-			$checked = trim($val)==trim($value) ? 'checked' : '';
+			$arr = explode(':', $value);
+			$key = trim($arr[0]);
+			$value = isset($arr[1]) ? $arr[1] : $arr[0]; 
+			$checked = trim($val)==$key ? 'checked' : '';
 			$string .= '<label class="option_label option_radio" >';
-			$string .= '<input type="radio" class="yzm-radio" name="'.$name.'" id="'.$name.'_'.$value.'" '.$checked.' value="'.$value.'">'.$value;
+			$string .= '<input type="radio" class="yzm-radio" name="'.$name.'" id="'.$name.'_'.$key.'" '.$checked.' value="'.$key.'">'.$value;
 			$string .= '</label>';
 		}
 		return $string;
@@ -151,8 +177,9 @@ class form {
 	 * @param $style 样式
 	 * @param $attribute 外加属性	 
 	 */
-	public static function image($name, $val = '', $style = 'width:370px', $iscropper = false, $attribute = '') {		
-		$string = '<input class="input-text uploadfile" type="text" name="'.$name.'"  value="'.$val.'"  onmouseover="yzm_img_preview(\''.$name.'\', this.value)" onmouseout="layer.closeAll();" id="'.$name.'" style="'.$style.'" '.$attribute.'> <a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name)).'\')" class="btn btn-primary radius upload-btn"><i class="Hui-iconfont">&#xe642;</i> 浏览文件</a>';
+	public static function image($name, $val = '', $style = '', $iscropper = false, $attribute = '') {	
+		$style = $style ? $style : 'width:370px';		
+		$string = '<input type="hidden" name="'.$name.'_attid" id="'.$name.'_attid" value="0"><input class="input-text uploadfile" type="text" name="'.$name.'"  value="'.$val.'"  onmouseover="yzm_img_preview(\''.$name.'\', this.value)" onmouseout="layer.closeAll();" id="'.$name.'" style="'.$style.'" '.$attribute.'> <a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name), false).'\')" class="btn btn-primary radius upload-btn"><i class="yzm-iconfont yzm-iconshangchuan"></i> 浏览文件</a>';
 		
 		if($iscropper) $string = $string .' '.form::cropper($name);
 		return $string;
@@ -167,17 +194,19 @@ class form {
 	 * @param $n 上传数量
 	 */
 	public static function images($name, $val = '', $n = 20) {
+		$n = $n ? $n : 20;
 		$string = '';
 		$string .= '<fieldset class="fieldset_list"><legend>图片列表</legend><div class="fieldset_tip">您最多可以同时上传 <span style="color:red">'.$n.'</span> 个文件</div>
 					<ul id="'.$name.'" class="file_ul">';
 		if($val){
+			$string .= '<input type="hidden" name="'.$name.'" value="">';
 			$arr = string2array($val);
 			foreach($arr as $key => $val){
-				$string .= '<li>文件：<input type="text" name="'.$name.'[url][]" value="'.$val['url'].'" id="'.$name.'_'.$key.'" onmouseover="yzm_img_preview(\''.$name.'_'.$key.'\', this.value)" onmouseout="layer.closeAll();" class="input-text w_300"> 描述：<input type="text" name="'.$name.'[alt][]" value="'.$val['alt'].'" class="input-text w_200"><a href="javascript:;" onclick="remove_li(this);">删除</a></li>';
+				$string .= '<li>文件：<input type="text" name="'.$name.'[url][]" value="'.$val['url'].'" id="'.$name.'_'.$key.'" onmouseover="yzm_img_preview(\''.$name.'_'.$key.'\', this.value)" onmouseout="layer.closeAll();" class="input-text yzm-input-url"> 描述：<input type="text" name="'.$name.'[alt][]" value="'.$val['alt'].'" class="input-text yzm-input-alt"><a href="javascript:;" class="secondary" onclick="yzm_move_li(this, 1);">上移</a> <a href="javascript:;" class="secondary" onclick="yzm_move_li(this, 0);">下移</a> <a href="javascript:;" class="danger" onclick="yzm_delete_li(this);">删除</a></li>';
 			}
 		}					
 		$string .= 	'</ul></fieldset>
-				<a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name, 'n'=>$n)).'\')" class="btn btn-primary radius upload-btn mt-5"><i class="Hui-iconfont">&#xe642;</i> 浏览文件</a> <a href="javascript:;" onclick="yzm_add_attachment(\''.$name.'\')" class="btn btn-secondary radius upload-btn mt-5"><i class="Hui-iconfont">&#xe6ab;</i> 添加远程地址</a>';
+				<a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name, 'n'=>$n), false).'\')" class="btn btn-primary radius upload-btn mt-5"><i class="yzm-iconfont yzm-iconshangchuan"></i> 浏览文件</a> <a href="javascript:;" onclick="yzm_add_attachment(\''.$name.'\')" class="btn btn-secondary radius upload-btn mt-5"><i class="yzm-iconfont yzm-icontianjia"></i> 添加远程地址</a>';
 		
 		return $string;
 	}
@@ -190,7 +219,7 @@ class form {
 	 * @param $spec  	裁剪规则，1：4*3, 2:3*2, 3:1*1, 4:2*3
 	 */
 	public static function cropper($cid, $spec=2) {		
-		$string = '<a href="javascript:;" onclick="yzm_img_cropper(\''.$cid.'\', \''.U('attachment/api/img_cropper', array('spec'=>$spec)).'\')" class="btn btn-secondary radius upload-btn"><i class="Hui-iconfont">&#xe6bc;</i> 裁剪图片</a>';
+		$string = '<a href="javascript:;" onclick="yzm_img_cropper(\''.$cid.'\', \''.U('attachment/api/img_cropper', array('spec'=>$spec), false).'\')" class="btn btn-secondary radius upload-btn"><i class="yzm-iconfont yzm-iconcaijian"></i> 裁剪图片</a>';
 		
 		return $string;
 	}
@@ -204,11 +233,39 @@ class form {
 	 * @param $style 样式
 	 * @param $attribute 外加属性	
 	 */
-	public static function attachment($name, $val = '', $style='width:370px', $attribute='') {		
-		$string = '<input class="input-text uploadfile" type="text" name="'.$name.'"  value="'.$val.'"  id="'.$name.'" style="'.$style.'" '.$attribute.'> <a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name, 't'=>2)).'\')" class="btn btn-primary radius upload-btn"><i class="Hui-iconfont">&#xe642;</i> 浏览文件</a>';
+	public static function attachment($name, $val = '', $style='', $attribute='') {
+		$style = $style ? $style : 'width:370px';		
+		$string = '<input type="hidden" name="'.$name.'_attid" id="'.$name.'_attid" value="0"><input class="input-text uploadfile" type="text" name="'.$name.'"  value="'.$val.'"  id="'.$name.'" style="'.$style.'" '.$attribute.'> <a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name, 't'=>2), false).'\')" class="btn btn-primary radius upload-btn"><i class="yzm-iconfont yzm-iconshangchuan"></i> 浏览文件</a>';
 		
 		return $string;
 	}	
+	
+	
+	/**
+	 * 多文件上传
+	 * 
+	 * @param $name name
+	 * @param $val 默认值
+	 * @param $n 上传数量
+	 */
+	public static function attachments($name, $val = '', $n = 20) {
+		$n = $n ? $n : 20;
+		$string = '';
+		$string .= '<fieldset class="fieldset_list"><legend>文件列表</legend><div class="fieldset_tip">您最多可以同时上传 <span style="color:red">'.$n.'</span> 个文件</div>
+					<ul id="'.$name.'" class="file_ul">';
+		if($val){
+			$string .= '<input type="hidden" name="'.$name.'" value="">';
+			$arr = string2array($val);
+			foreach($arr as $key => $val){
+				$string .= '<li>文件：<input type="text" name="'.$name.'[url][]" value="'.$val['url'].'" id="'.$name.'_'.$key.'" class="input-text yzm-input-url"> 描述：<input type="text" name="'.$name.'[alt][]" value="'.$val['alt'].'" class="input-text yzm-input-alt"><a href="javascript:;" class="secondary" onclick="yzm_move_li(this, 1);">上移</a> <a href="javascript:;" class="secondary" onclick="yzm_move_li(this, 0);">下移</a> <a href="javascript:;" class="danger" onclick="yzm_delete_li(this);">删除</a></li>';
+			}
+		}					
+		$string .= 	'</ul></fieldset>
+				<a href="javascript:;" onclick="yzm_upload_att(\''.U('attachment/api/upload_box', array('module'=>ROUTE_M, 'pid'=>$name, 'n'=>$n, 't'=>2), false).'\')" class="btn btn-primary radius upload-btn mt-5"><i class="yzm-iconfont yzm-iconshangchuan"></i> 浏览文件</a> <a href="javascript:;" onclick="yzm_add_attachment(\''.$name.'\')" class="btn btn-secondary radius upload-btn mt-5"><i class="yzm-iconfont yzm-icontianjia"></i> 添加远程地址</a>';
+		
+		return $string;
+	}
+
 	
 	/**
 	 * 编辑器
@@ -222,9 +279,9 @@ class form {
 		$style = $style ? $style : 'width:100%;height:400px';
 		$string = '';
 		if($isload) {
-			$string .= '<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/1.4.3.3/ueditor.config.js"></script>
-			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/1.4.3.3/ueditor.all.min.js"> </script>
-			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/1.4.3.3/lang/zh-cn/zh-cn.js"></script>';
+			$string .= '<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/ueditor.config.js"></script>
+			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/ueditor.all.min.js"> </script>
+			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/lang/zh-cn/zh-cn.js"></script>';
 		}
 		$string .= '<script id="'.$name.'" type="text/plain" style="'.$style.'" name="'.$name.'">'.$val.'</script>
 			<script type="text/javascript"> var ue = UE.getEditor(\''.$name.'\'); </script>';
@@ -245,14 +302,14 @@ class form {
 		$style = $style ? $style : 'width:100%;height:400px';
 		$string = '';
 		if($isload) {
-			$string .= '<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/1.4.3.3/ueditor.config.js"></script>
-			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/1.4.3.3/ueditor.all.min.js"> </script>
-			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/1.4.3.3/lang/zh-cn/zh-cn.js"></script>';
+			$string .= '<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/ueditor.config.js"></script>
+			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/ueditor.all.min.js"> </script>
+			<script type="text/javascript" charset="utf-8" src="'.STATIC_URL.'plugin/ueditor/lang/zh-cn/zh-cn.js"></script>';
 		}		
 		$string .= '<script id="'.$name.'" type="text/plain" style="'.$style.'" name="'.$name.'">'.$val.'</script>
 			<script type="text/javascript"> var ue = UE.getEditor("'.$name.'",{
-            toolbars:[[ "fullscreen","source","|","undo","redo","|",
-            "bold","italic","underline","blockquote","forecolor","|","fontfamily","fontsize","|","simpleupload","link","unlink","emotion","date","time","drafts"]],
+            toolbars:[[ "fullscreen","source","|","undo","redo","|", "removeformat", "formatmatch", "pasteplain",
+            "bold","italic","underline","blockquote","forecolor","|","paragraph","fontsize","fontfamily","|","simpleupload","link","unlink","emotion","insertcode","date","time","drafts"]],
             //关闭字数统计
             wordCount:false,
             //关闭elementPath

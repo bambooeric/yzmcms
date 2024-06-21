@@ -40,7 +40,7 @@ class yzm_tpl {
 		$str = preg_replace("/".$this->template_tag_left."\/for".$this->template_tag_right."/", "<?php } ?>",$str);
 
 		$str = preg_replace("/".$this->template_tag_left."\+\+(.+?)".$this->template_tag_right."/", "<?php ++\\1; ?>", $str);
-		$str = preg_replace("/".$this->template_tag_left."\-\-(.+?)".$this->template_tag_right."/", "<?php ++\\1; ?>", $str);
+		$str = preg_replace("/".$this->template_tag_left."\-\-(.+?)".$this->template_tag_right."/", "<?php --\\1; ?>", $str);
 		$str = preg_replace("/".$this->template_tag_left."(.+?)\+\+".$this->template_tag_right."/", "<?php \\1++; ?>", $str);
 		$str = preg_replace("/".$this->template_tag_left."(.+?)\-\-".$this->template_tag_right."/", "<?php \\1--; ?>", $str);
 		$str = preg_replace("/".$this->template_tag_left."loop\s+(\S+)\s+(\S+)".$this->template_tag_right."/", "<?php if(is_array(\\1)) foreach(\\1 as \\2) { ?>", $str);
@@ -49,7 +49,8 @@ class yzm_tpl {
 		$str = preg_replace("/".$this->template_tag_left."([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff:]*\(([^{}]*)\))".$this->template_tag_right."/", "<?php echo \\1;?>", $str); 
 		$str = preg_replace("/".$this->template_tag_left."\\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff:]*\(([^{}]*)\))".$this->template_tag_right."/", "<?php echo \\1;?>", $str);
 		$str = preg_replace("/".$this->template_tag_left."(\\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)".$this->template_tag_right."/", "<?php echo \\1;?>", $str); 
-		$str = preg_replace("/".$this->template_tag_left."([A-Z_\x7f-\xff][A-Z0-9_\x7f-\xff]*)".$this->template_tag_right."/s", "<?php echo \\1;?>", $str ); 
+		$str = preg_replace("/".$this->template_tag_left."([A-Z_\x7f-\xff][A-Z0-9_\x7f-\xff]*)".$this->template_tag_right."/s", "<?php echo \\1;?>", $str); 
+		$str = preg_replace("/".$this->template_tag_left."(\\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)->(\w+)(.*?)".$this->template_tag_right."/", "<?php echo \\1->\\2\\3;?>", $str);
 		$str = preg_replace_callback("/".$this->template_tag_left."(\\$[a-zA-Z0-9_\[\]\'\"\$\x7f-\xff]+)".$this->template_tag_right."/s",  array($this, 'addquote'), $str); 
 		$str = preg_replace_callback("/".$this->template_tag_left."m:(\w+)\s+([^}]+)".$this->template_tag_right."/i", array($this, 'yzm_tag_callback'), $str);
 
@@ -72,12 +73,21 @@ class yzm_tpl {
 		foreach ($matches as $v) {
 			$datas[$v[1]] = $v[2];
 		}
+		$cache = isset($datas['cache']) ? intval($datas['cache']) : 0;
 		$return = isset($datas['return']) && trim($datas['return']) ? trim($datas['return']) : 'data';
-		$str = '$tag = yzm_base::load_sys_class(\'yzm_tag\');';
+		$str = '';
+		if ($cache && !isset($datas['page'])) {
+			$str = '$tag_cache_name = \'tag_cache_\'.md5(implode(\'&\','.self::arr_to_html($datas).'));if(!$'.$return.' = getcache($tag_cache_name)){';
+		}
+		$str .= '$tag = yzm_base::load_sys_class(\'yzm_tag\');';
 		$str .= 'if(method_exists($tag, \''.$action.'\')) {';
 		$str .= '$'.$return.' = $tag->'.$action.'('.self::arr_to_html($datas).');';
 		if(isset($datas['page'])) $str .= '$pages = $tag->pages();';		
 		$str .= '}';
+		if ($cache && !isset($datas['page'])) {
+			$str .= 'if(!empty($'.$return.')){setcache($tag_cache_name, $'.$return.', '.$cache.');}';
+			$str .= '}';
+		}
 		return '<?php '.$str.'?>';
 	}
 	

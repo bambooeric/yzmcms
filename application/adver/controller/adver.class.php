@@ -80,7 +80,7 @@ class adver extends common {
 	public function del() {
 		if($_POST && is_array($_POST['id'])){
 			if(D('adver')->delete($_POST['id'], true)){
-				showmsg(L('operation_success'));
+				showmsg(L('operation_success'), '', 1);
 			}else{
 				showmsg(L('operation_failure'));
 			}
@@ -100,7 +100,7 @@ class adver extends common {
 			return $data['text'];
 		}		
 			
-		return '<a href="'.$data['url'].'" target="_blank" title="'.$data['title'].'"><img src="'.$data['img'].'"></a>';
+		return '<a href="'.$data['url'].'" target="_blank" title="'.$data['title'].'"><img src="'.safe_replace($data['img']).'"></a>';
 	}
 
 }

@@ -1,32 +1,101 @@
 <?php include $this->admin_tpl('meta');?>
 <title>栏目管理 - YzmCMS内容管理系统</title>
+<style>.parentid,.yzm-tree-toggle{cursor:pointer;user-select:none}.tr_hide{display:none}</style>
 </head>
 <body>
-<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 内容管理 <span class="c-gray en">&gt;</span> 栏目管理 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<nav class="breadcrumb"><i class="yzm-iconfont yzm-iconai-home"></i> 首页 <span class="c-gray en">&gt;</span> 内容管理 <span class="c-gray en">&gt;</span> 栏目管理 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="yzm-iconfont yzm-iconshuaxin"></i></a></nav>
 <div class="page-container">
-	<div class="cl pd-5 bg-1 bk-gray"> <span class="l"><a href="javascript:;" onclick="yzm_open('添加栏目','<?php echo U('add', array('type'=>0));?>',800,500)" class="btn btn-primary radius"><i class="Hui-iconfont">&#xe600;</i> 添加栏目</a> <a href="javascript:;" onclick="yzm_open('添加单页','<?php echo U('add', array('type'=>1));?>',800,500)" class="btn btn-secondary radius"><i class="Hui-iconfont">&#xe600;</i> 添加单页</a> <a href="javascript:;" onclick="yzm_open('添加外部链接','<?php echo U('add', array('type'=>2));?>',800,500)" class="btn btn-success radius"><i class="Hui-iconfont">&#xe600;</i> 添加外部链接</a></span></div>
+	<div class="cl tb-top"> 
+		<span class="l">
+			<a href="javascript:;" onclick="yzm_open('添加栏目','<?php echo U('add', array('type'=>0));?>',800,500)" class="btn btn-primary radius"><i class="yzm-iconfont yzm-icontianjia"></i> 添加栏目</a> 
+			<a href="javascript:;" onclick="yzm_open('添加单页','<?php echo U('add', array('type'=>1));?>',800,500)" class="btn btn-secondary radius"><i class="yzm-iconfont yzm-icontianjia"></i> 添加单页</a> 
+			<a href="javascript:;" onclick="yzm_open('添加外部链接','<?php echo U('add', array('type'=>2));?>',800,500)" class="btn btn-success radius"><i class="yzm-iconfont yzm-icontianjia"></i> 添加外部链接</a>
+			<a href="javascript:;" onclick="yzm_open('批量添加','<?php echo U('adds');?>',800,510)" class="btn btn-primary radius"><i class="yzm-iconfont yzm-icontianjia"></i> 批量添加</a>
+		</span>
+	</div>
 	<form action="<?php echo U('order');?>" method="post">
-	<table class="table table-border table-bordered table-bg table-hover">
+	<table class="table table-border table-bg table-hover">
 		<thead>
 			<tr class="text-c">
-				<th>排序</th>
-				<th>栏目ID</th>
-				<th class="text-l">栏目名称</th>
-				<th>栏目类型</th>
-				<th>所属模型</th>		
-				<th>链接地址</th>		
-				<th>导航显示</th>
-				<th>允许投稿</th>
-				<th>管理操作</th>
+				<th width="60">排序</th>
+				<th width="60">栏目ID</th>
+				<th class="text-l">
+					<?php if($tree_toggle){ ?>
+					<i class="yzm-iconfont yzm-iconshousuojiahao yzm-tree-toggle" isshow="0" onclick="yzm_tree_toggle(this)"></i>
+					<?php }else{ ?>
+					<i class="yzm-iconfont yzm-iconshousuojianhao yzm-tree-toggle" isshow="1" onclick="yzm_tree_toggle(this)"></i>
+					<?php } ?>栏目名称
+				</th>
+				<th width="80">栏目类型</th>
+				<th width="100">所属模型</th>		
+				<th width="80">链接地址</th>		
+				<th width="80">导航显示</th>
+				<th width="80">允许投稿</th>
+				<th width="210">管理操作</th>
 			</tr>
 		</thead>
 		<tbody>
 				<?php echo $categorys;?>
 		</tbody>
 	</table>
-	<div class="cl pd-5 bg-1 bk-gray"> <span class="l"><input class="orderbutton btn-primary radius" name="dosubmit" value="排序" type="submit"></span></div>
+	<?php if(!$data){ ?><div class="yzm_no_data"><i class="yzm-iconfont yzm-iconshuoming"></i> 暂无数据</div><?php } ?>
+	<div class="cl mt-5"> <span class="l"><input class="orderbutton btn-primary radius" name="dosubmit" value="排序" type="submit"></span></div>
 	</form>
 </div>
 <?php include $this->admin_tpl('footer');?>
+<script type="text/javascript">
+
+	function yzm_set_cookie(name, value, hours) {
+	  var str = name + "=" + encodeURIComponent(value);
+	  if (hours > 0) {
+	    var date = new Date();
+	    var ms = hours * 3600 * 1000;
+	    date.setTime(date.getTime() + ms);
+	    str += "; expires=" + date.toGMTString();
+	  }
+	  str += "; path=/; SameSite=Lax;";
+	  document.cookie = str;
+	}
+
+	function yzm_set_status(){
+        var category_show_status = {};
+		$(".parentid").each(function () {
+			category_show_status[$(this).attr("catid")] = $(this).attr("action");
+        })
+        yzm_set_cookie('category_show_status_<?php echo self::$siteid;?>', JSON.stringify(category_show_status));
+	}
+
+  	function yzm_tree_toggle(obj) {
+		var isshow = $(obj).attr("isshow");
+		if(isshow == "0"){
+			$(obj).attr("isshow", "1");
+			$(obj).removeClass("yzm-iconshousuojiahao").addClass("yzm-iconshousuojianhao");
+			$(".top .parentid").attr('action', 2).html('&#xe653;');
+			$(".child").removeClass("tr_hide");
+		}else{
+			$(obj).attr("isshow", "0");
+			$(obj).removeClass("yzm-iconshousuojianhao").addClass("yzm-iconshousuojiahao");
+			$(".top .parentid").attr('action', 1).html('&#xe652;');
+			$(".child").addClass("tr_hide");
+		}
+		yzm_set_status();
+    }
+
+    $(".parentid").click(function () {
+        var action = parseInt($(this).attr("action"));
+        var tr = $(this).parents('tr').eq(0);
+        switch (action) {
+            case 1://展示
+                $(tr).nextUntil('.top').removeClass("tr_hide");
+                $(this).attr('action', 2).html('&#xe653;');
+                break;
+            case 2://收缩
+                $(tr).nextUntil('.top').addClass("tr_hide");
+                $(this).attr('action', 1).html('&#xe652;');
+                break;
+        }
+        yzm_set_status();
+    })
+</script>
 </body>
 </html>

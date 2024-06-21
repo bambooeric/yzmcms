@@ -12,7 +12,7 @@ yzm_base::load_sys_class('page','',0);
 
 class member_pay extends common{
 	
-	function __construct() {
+	public function __construct() {
 		parent::__construct();
 	}
 
@@ -27,7 +27,7 @@ class member_pay extends common{
 		$total = $pay->where(array('userid'=>$userid))->total();
 		$page = new page($total, 15);
 		$data = $pay->where(array('userid'=>$userid))->order('id DESC')->limit($page->limit())->select();	
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('member', 'pay');
 	}
 	
@@ -39,7 +39,7 @@ class member_pay extends common{
 	public function pay(){
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
-		$data = D('pay_mode')->field('`id`,`name`,`logo`,`desc`,`version`')->where(array('enabled'=>0))->order('id ASC')->select();
+		$data = D('pay_mode')->field('`id`,`name`,`logo`,`desc`,`version`')->where(array('enabled'=>1))->order('id ASC')->select();
 		include template('member', 'point_pay');
 	}	
 	
@@ -48,12 +48,8 @@ class member_pay extends common{
 	 * 生成订单
 	 */	
 	public function create_order(){
-		if(isset($_POST['dosubmit'])){
-			if(empty($_SESSION['code']) || strtolower($_POST['code'])!=$_SESSION['code']){
-				$_SESSION['code'] = '';
-				showmsg(L('code_error'));
-			}
-			$_SESSION['code'] = '';
+		if(is_post()){
+			$this->_check_code($_POST['code']);
 				
 			$paytype = intval($_POST['paytype']);
 			if(!$paytype) showmsg('请选择支付方式！', 'stop');
@@ -98,7 +94,7 @@ class member_pay extends common{
 		$total = $order->where(array('userid'=>$userid))->total();
 		$page = new page($total, 15);
 		$data = $order->where(array('userid'=>$userid))->order('id DESC')->limit($page->limit())->select();	
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('member', 'order_list');
 	}
 	
@@ -126,7 +122,7 @@ class member_pay extends common{
 		$total = $pay_spend->where(array('userid'=>$userid))->total();
 		$page = new page($total, 15);
 		$data = $pay_spend->where(array('userid'=>$userid))->order('id DESC')->limit($page->limit())->select();	
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('member', 'spend_record');
 	}
 	
@@ -144,9 +140,15 @@ class member_pay extends common{
 		if(!preg_match('/^([0-9]+)_([0-9]+)$/', $flag)) showmsg(L('illegal_parameters'), 'stop');
 		$readpoint = intval($auth_str[1]);
 		$paytype = intval($auth_str[2]);
-		$http_referer = $auth_str[3];
+		$author_userid = intval($auth_str[3]);
 		M('point')->point_spend($paytype,$readpoint,'7',$this->memberinfo['userid'],$this->memberinfo['username'],$flag);
-		showmsg('支付成功，请刷新原页面！', $http_referer, 2);
+
+		// 增加原作者收入
+		if($author_userid){
+			$username = D('member')->field('username')->where(array('userid'=>$author_userid))->one();
+			M('point')->point_add($paytype,$readpoint,12,$author_userid,$username,0,'内容（'.$flag.'）收入','',false);
+		}
+		showmsg('支付成功，请刷新原页面！', '', 2);
 	}
 
 

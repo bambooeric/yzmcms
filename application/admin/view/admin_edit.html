@@ -6,12 +6,25 @@
 <div class="formdoby_normal"> 
 	<form method="post" onsubmit="return dosub(this)">
 		<ul>
-			 <li><label>用户名：</label><input type="text" class="input" placeholder="用户名" name="adminname" disabled="disabled" value="<?php echo $data['adminname'];?>"></li>
-			 <li><label>密码：</label><input type="password" class="input" autocomplete="off" value="" placeholder="不修改请留空" name="password"></li>	
-			 <li><label>确认密码：</label><input type="password" class="input" autocomplete="off" value=""  placeholder="不修改请留空" id="password2" name="password2"></li>	
-			 <li><label>邮箱：</label><input type="email" class="input" placeholder="@" name="email" value="<?php echo $data['email'];?>"></li>
-			 <li><label>真实姓名：</label><input type="text" class="input" placeholder="真实姓名" name="realname" value="<?php echo $data['realname'];?>"></li>
-			 <li><label>用户昵称：</label><input type="text" class="input" placeholder="发布内容时显示" name="nickname" value="<?php echo $data['nickname'];?>"></li>
+			 <li><label>用户名：</label>
+			 	<input type="text" class="input disabled" placeholder="用户名" name="adminname" disabled="disabled" value="<?php echo $data['adminname'];?>">
+			 </li>
+			 <li><label>密码：</label>
+			 	<input type="password" class="input" autocomplete="off" value="" placeholder="不修改请留空" name="password">
+			 </li>	
+			 <li><label>确认密码：</label>
+			 	<input type="password" class="input" autocomplete="off" value=""  placeholder="不修改请留空" id="password2" name="password2">
+			 </li>	
+			 <li><label>邮箱：</label>
+			 	<input type="email" class="input" placeholder="@" name="email" value="<?php echo $data['email'];?>">
+			 </li>
+			 <li><label>真实姓名：</label>
+			 	<input type="text" class="input" placeholder="真实姓名" name="realname" value="<?php echo $data['realname'];?>">
+			 </li>
+			 <li class="yzm-explain-box"><label>用户昵称：</label>
+			 	<input type="text" class="input" placeholder="发布内容时显示" name="nickname" value="<?php echo $data['nickname'];?>"> 
+			 	<span class="yzm-explain">发布内容时显示，<br>修改后重新登录生效.</span>
+			 </li>
 			 <li>
 			 <label>角色：</label>
 			 <select  name="roleid" size="1">
@@ -22,14 +35,14 @@
 				 }
 			   ?>			
 			 </select>
-
 			 </li>
-			<li><input type="hidden" name="dosubmit" value="1"><input type="hidden" name="adminid" value="<?php echo $data['adminid'];?>">
-			<?php echo creat_token();?>
-			<input class="dosubmit w_120 btn-primary radius" type="submit" value="&nbsp;&nbsp;提交&nbsp;&nbsp;">
-			<input class="btn w_120 btn-default radius" type="button" value="取消" onclick="yzmcms_close()">
-			</li>
 		</ul>
+		<div class="footer_btn">
+			<input type="hidden" name="dosubmit" value="1">
+			<input type="hidden" name="adminid" value="<?php echo $data['adminid'];?>">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
+		</div>
 	</form>
 </div>
 </article>
@@ -38,14 +51,14 @@
 <script type="text/javascript">
 	function dosub(obj){
 		if(obj.password.value!=''){
-			 if(obj.password.value.length < 6){
-				 layer.msg('密码长度不能低于6位！');
-				 return false;
-			 }
-			 if(obj.password.value!==obj.password2.value){
-				 layer.msg('两次密码值不相等！');
-				 return false;
-			 }
+				if(obj.password.value.length < 6 || obj.password.value.length > 20){
+					layer.msg('密码长度为6-20位！', {icon:2});
+					return false;
+				}
+				if(obj.password.value!==obj.password2.value){
+					layer.msg('两次密码值不相等！', {icon:2});
+					return false;
+				}
 		 }
         $.ajax({
             type: 'POST',
@@ -54,9 +67,11 @@
 		    dataType: "json", 
             success: function (msg) {
 				if(msg.status == 1){
-					parent.location.reload();       
+					layer.msg(msg.message, {icon:1, time:800}, function(){
+						parent.location.reload();
+					});
 			    }else{
-					layer.msg(msg.message);
+					layer.msg(msg.message, {icon:2});
 				}
             }
         })		 

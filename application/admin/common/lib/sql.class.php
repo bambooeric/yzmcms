@@ -1,4 +1,11 @@
 <?php
+/**
+ * YzmCMS内容管理系统
+ * 商业用途务必到官方购买正版授权, 以免引起不必要的法律纠纷.
+ * 功能定制QQ: 21423830
+ * 版权所有 WWW.YZMCMS.COM
+ */
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 
 class sql{
@@ -18,10 +25,9 @@ class sql{
 		  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 		  `catid` smallint(5) unsigned NOT NULL DEFAULT '0',
 		  `userid` mediumint(8) unsigned NOT NULL DEFAULT '0',
-		  `username` varchar(20) NOT NULL DEFAULT '',
+		  `username` varchar(30) NOT NULL DEFAULT '',
 		  `nickname` varchar(30) NOT NULL DEFAULT '',
 		  `title` varchar(180) NOT NULL DEFAULT '',
-		  `seo_title` varchar(200) NOT NULL DEFAULT '',
 		  `color` char(9) NOT NULL DEFAULT '',
 		  `inputtime` int(10) unsigned NOT NULL DEFAULT '0',
 		  `updatetime` int(10) unsigned NOT NULL DEFAULT '0',
@@ -30,11 +36,11 @@ class sql{
 		  `click` mediumint(8) unsigned NOT NULL DEFAULT '0',
 		  `content` text NOT NULL,
 		  `copyfrom` varchar(50) NOT NULL DEFAULT '',
-		  `thumb` varchar(100) NOT NULL DEFAULT '',
+		  `thumb` varchar(150) NOT NULL DEFAULT '',
 		  `url` varchar(100) NOT NULL DEFAULT '',
 		  `flag` varchar(12) NOT NULL DEFAULT '' COMMENT '1置顶,2头条,3特荐,4推荐,5热点,6幻灯,7跳转',
 		  `status` tinyint(1) NOT NULL DEFAULT '1',
-		  `system` tinyint(1) unsigned NOT NULL DEFAULT '0',
+		  `issystem` tinyint(1) unsigned NOT NULL DEFAULT '1',
 		  `listorder` tinyint(3) unsigned NOT NULL DEFAULT '1',
 		  `groupids_view` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '阅读权限',
 		  `readpoint` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '阅读收费',
@@ -42,8 +48,8 @@ class sql{
 		  `is_push` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '是否百度推送',
 		  PRIMARY KEY (`id`),
 		  KEY `status` (`status`,`listorder`),
-		  KEY `catid` (`catid`,`status`),
-		  KEY `userid` (`userid`,`status`)
+		  KEY `catid` (`status`,`catid`),
+		  KEY `userid` (`status`,`userid`)
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
         self::sql_exec($sql);			
 	}
@@ -56,7 +62,7 @@ class sql{
 	}
 
 
-	public static function sql_add_field($tablename, $field, $defaultvalue='', $maxlength=100){
+	public static function sql_add_field($tablename, $field, $defaultvalue='', $maxlength=255){
 		self::set_tablename($tablename);
 		$sql = "ALTER TABLE `".self::$tablename."` ADD COLUMN `$field` varchar($maxlength) NOT NULL DEFAULT '$defaultvalue'";
 		self::sql_exec($sql);			
@@ -80,6 +86,13 @@ class sql{
 	public static function sql_add_field_int($tablename, $field, $defaultvalue=0){
 		self::set_tablename($tablename);
 		$sql = "ALTER TABLE `".self::$tablename."` ADD COLUMN `$field` int(10) UNSIGNED NOT NULL DEFAULT $defaultvalue";
+		self::sql_exec($sql);			
+	}
+
+
+	public static function sql_add_field_decimal($tablename, $field, $defaultvalue='0.00'){
+		self::set_tablename($tablename);
+		$sql = "ALTER TABLE `".self::$tablename."` ADD COLUMN `$field` decimal(8,2) unsigned NOT NULL DEFAULT $defaultvalue";
 		self::sql_exec($sql);			
 	}
 	

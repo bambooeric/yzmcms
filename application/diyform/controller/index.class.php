@@ -11,11 +11,17 @@ defined('IN_YZMPHP') or exit('Access Denied');
 
 class index{
 	
-	public $modelid, $modelinfo;
-	function __construct() {
+	public $siteid, $siteinfo, $modelid, $modelinfo;
+	public function __construct() {
 		
+		$this->siteid = get_siteid();
+		$this->siteinfo = array();
 		$this->modelid = isset($_GET['modelid']) ? intval($_GET['modelid']) : (isset($_POST['modelid']) ? intval($_POST['modelid']) : 0);
 		if(ROUTE_A != 'init')	$this->_check_model();
+		if($this->siteid){
+			$this->siteinfo = get_site($this->siteid);
+			set_module_theme($this->siteinfo['site_theme']);
+		}
 	}
 
 	
@@ -30,11 +36,10 @@ class index{
 		$formdata = $model->where(array('type'=>1, 'disabled'=>0))->order('modelid DESC')->limit($page->limit())->select();
 		
 		//SEO相关设置
-		$site = get_config();
-		$seo_title = '自定义表单列表_'.$site['site_name'];
-		$keywords = $site['site_keyword'];
-		$description = $site['site_description'];
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$site = array_merge(get_config(), $this->siteinfo);
+		list($seo_title, $keywords, $description) = get_site_seo($this->siteid, '自定义表单列表');	
+
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('index', 'list_diyform');	
 	}
 	
@@ -50,10 +55,9 @@ class index{
 		$template = $modelinfo['show_template'];
 		
 		//SEO相关设置
-		$site = get_config();
-		$seo_title = $title.'_'.$site['site_name'];
-		$keywords = $site['site_keyword'];
-		$description = $modelinfo['description'] ? $modelinfo['description'] : $site['site_description'];
+		$site = array_merge(get_config(), $this->siteinfo);
+		list($seo_title, $keywords, $description) = get_site_seo($this->siteid, $title);
+		$description = $modelinfo['description'] ? $modelinfo['description'] : $description;
 		
 		//获取当前位置
 		$location = '<a href="'.SITE_URL.'">首页</a> &gt; <a href="'.U('init').'">'.$modelinfo['name'].'</a> &gt;显示页';
@@ -68,12 +72,12 @@ class index{
 	 * 自定义表单提交
 	 */	
 	public function post(){	
-		if(isset($_POST['dosubmit'])){
+		if(is_post()) {
 
 			if($this->modelinfo['check_code']){
 				if(empty($_SESSION['code']) || strtolower($_POST['code'])!=$_SESSION['code']){
 					$_SESSION['code'] = '';
-					showmsg(L('code_error'));
+					return_message(L('code_error'), 0);
 				}
 				$_SESSION['code'] = '';
 			}
@@ -81,7 +85,9 @@ class index{
 			$field_check = $this->_get_model_str($this->modelid, true);
 			foreach($field_check as $k => $v){
 				if($v['isrequired']){
-					if(empty($_POST[$k])) showmsg($v['errortips']);
+					if(!isset($_POST[$k])) return_message(L('lose_parameters'), 0);
+					$length = is_array($_POST[$k]) ? (empty($_POST[$k]) ? 0 : 1) : strlen($_POST[$k]);
+					if(!$length) return_message($v['errortips'], 0);
 				}
 			}
 
@@ -97,7 +103,7 @@ class index{
 			$tablename = D($this->modelinfo['tablename']);
 			$id = $tablename->insert($_POST);
 			
-			if(!$id) showmsg(L('operation_failure'), 'stop');
+			if(!$id) return_message(L('operation_failure'), 0);
 			D('model')->update('`items`=`items`+1', array('modelid'=>$this->modelid));
 
 			//发送邮件通知
@@ -106,7 +112,7 @@ class index{
 				'您的网站-表单（'.$this->modelinfo['name'].'）有新的消息，<a href="'.get_config('site_url').'">请查看</a>！<br> <b>'.get_config('site_name').'</b>');
 			}
 			
-			showmsg(L('operation_success'));
+			return_message(L('operation_success'));
 		}
 	}
 	
@@ -116,14 +122,17 @@ class index{
 	 * 检查model
 	 */	
 	private function _check_model() {
-		session_start();
+		new_session_start();
 		$data = D('model')->where(array('modelid'=>$this->modelid))->find();
 		if(!$data || $data['type']!=1 || $data['disabled']==1){
-			showmsg('表单不存在或已禁用!', 'stop');
+			return_message('表单不存在或已禁用！', 0);
 		}
 		
 		$setting = json_decode($data['setting'], true);
-		if(!$setting['allowvisitor'] && empty($_SESSION['_userid'])) showmsg('请登录会员！', url_referer(get_url()), 2);
+		if(!$setting['allowvisitor'] && empty($_SESSION['_userid'])) {
+			is_ajax() && return_json(array('status'=>0, 'message'=>'请登录会员！'));
+			showmsg('请登录会员！', url_referer(), 2);
+		}
 		
 		$this->modelinfo = array_merge($data, $setting);
 	}
@@ -166,13 +175,16 @@ class index{
 		
 		$fields = $fieldstr = array();
 		foreach($modelinfo as $val){
-			$fieldtype = $val['fieldtype'];
+			$fieldtype = $val['fieldtype']=='decimal' ? 'input' : $val['fieldtype'];
 			if($data){
 				$val['defaultvalue'] = isset($data[$val['field']]) ? $data[$val['field']] : '';
 			}
 			$setting = $val['setting'] ? string2array($val['setting']) : 0;
-			$required = $val['isrequired'] ? '<span class="red">*</span>' : '';
-			$fieldstr[] = '<td class="yzm-table-title">'.$val['name'].$required.'</td><td>'.form::$fieldtype($val['field'], $val['defaultvalue'], $setting).'</td>';	
+			$required = $val['isrequired'] ? '<span class="required">*</span>' : '';
+			$fieldstr[] = array(
+				'field' => $required.$val['name'],
+				'form' => form::$fieldtype($val['field'], $val['defaultvalue'], $setting)
+			);
 			$fields[$val['field']] = $val['isrequired'] ? array('isrequired'=>1, 'fieldtype'=>$fieldtype, 'errortips'=>$val['errortips'] ? $val['errortips'] : $val['name'].'不能为空！') : array('isrequired'=>0);
 		}
 		

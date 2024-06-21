@@ -1,14 +1,19 @@
 <?php
-/**
- * 微信处理类
- * 
- * @author           袁志蒙  
- * @license          http://www.yzmcms.com
- * @lastmodify       2017-11-01
- */
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 	 
 	 
 class wechat {
+
+	public $appid,$secret;
 	
     /**
      *  添加微信用户
@@ -53,6 +58,8 @@ class wechat {
 			if($data['relation_id']){
 				$wx_relation_model = get_config('wx_relation_model');
 				if(!$wx_relation_model) return false;
+				$model_db = get_model($wx_relation_model);
+				if(!$model_db) return false;
 				$model_db = D($wx_relation_model);
 				$where = strpos($data['relation_id'], ',') ? 'id IN ('.$data['relation_id'].')' : 'id = '.$data['relation_id'];
 				$news = $model_db->field('title, description, thumb AS picurl, url')->where($where)->order('id DESC')->select();
@@ -72,6 +79,8 @@ class wechat {
 				if($data['relation_id']){
 					$wx_relation_model = get_config('wx_relation_model');
 					if(!$wx_relation_model) return false;
+					$model_db = get_model($wx_relation_model);
+					if(!$model_db) return false;
 					$model_db = D($wx_relation_model);
 					$where = strpos($data['relation_id'], ',') ? 'id IN ('.$data['relation_id'].')' : 'id = '.$data['relation_id'];
 					$news = $model_db->field('title, description, thumb AS picurl, url')->where($where)->order('id DESC')->select();
@@ -104,7 +113,7 @@ class wechat {
 	private function get_userinfo($openid){
 		
         $url = 'https://api.weixin.qq.com/cgi-bin/user/info?access_token='.$this->get_access_token().'&openid='.$openid.'&lang=zh_CN';
-        $json_arr = $this->https_request($url);
+        $json_arr = https_request($url);
 
 		if(isset($json_arr['errcode'])){
 			return false;
@@ -135,7 +144,7 @@ class wechat {
 		if(!$access_token = getcache('wechat_access_token')){
 			$url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$this->appid.'&secret='.$this->secret;
 
-			$access_token = $this->https_request($url);
+			$access_token = https_request($url);
 			
 			if(isset($access_token['errcode'])) return false;
 			
@@ -155,7 +164,7 @@ class wechat {
 				if(!is_array($value)){
 					$jsonstr[$key] = urlencode($value);
 				}else{
-					$jsonstr[$key] = urlencode(my_json_encode($value));
+					$jsonstr[$key] = urlencode($this->my_json_encode($value));
 				}
 			}  
 			$jsonstr = urldecode(json_encode($jsonstr)); 
@@ -164,25 +173,6 @@ class wechat {
 			$jsonstr = json_encode($array, JSON_UNESCAPED_UNICODE);  //必须PHP5.4+  
 		}	
 		return $jsonstr;
-	}
-
-
-
-    /**
-     *  https请求，支持get与post
-     */
-	protected function https_request($url, $data = '', $array = true){
-		$curl = curl_init($url);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
-		if($data){
-			curl_setopt($curl, CURLOPT_POST, 1);
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-		}
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		$output = curl_exec($curl);
-		curl_close($curl);
-		return $array ? json_decode($output, true) : $output;
-	} 	
+	}	
 
 }

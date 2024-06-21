@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 yzm_base::load_sys_class('page','',0);
@@ -99,14 +109,20 @@ class reply extends common{
 	public function select_article(){
 		$wx_relation_model = get_config('wx_relation_model');
 		if(!$wx_relation_model) showmsg('请选择微信关联模型！', 'stop');
-		$model_db = D($wx_relation_model);
+		$model_db = get_model($wx_relation_model) ? D(get_model($wx_relation_model)) : showmsg('关联模型不存在！', 'stop');
 		$where = array();
-		if(isset($_GET['dosubmit']) && $_GET['searinfo']){
-			$where['title'] = '%'.$_GET['searinfo'].'%';
+		if(isset($_GET['dosubmit'])){
+			if($_GET['catid']) $where['catid'] = intval($_GET['catid']);
+			if(isset($_GET['start']) && $_GET['start'] && $_GET['end']){		
+				$where['updatetime>'] = strtotime($_GET['start'].' 00:00:00');
+				$where['updatetime<'] = strtotime($_GET['end'].' 23:59:59');
+			}
+			if($_GET['searinfo']) $where['title'] = '%'.safe_replace($_GET['searinfo']).'%';
 		}
+		$catid = isset($_GET['catid']) ? intval($_GET['catid']) : 0;
 		$total = $model_db->where($where)->total();
 		$page = new page($total, 7);
-		$data = $model_db->field('id, title, url, thumb, flag, catid, readpoint, updatetime')->where($where)->order('id DESC')->limit($page->limit())->select();
+		$data = $model_db->field('id, title, url, thumb, flag, catid, readpoint, inputtime, updatetime')->where($where)->order('id DESC')->limit($page->limit())->select();
 		include $this->admin_tpl('select_article');
 	}
 

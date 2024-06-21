@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 yzm_base::load_sys_class('page','',0);
@@ -14,9 +24,10 @@ class index extends common{
 		$of = in_array($of, array('id','module','filesize','uploadtime','username','uploadip')) ? $of : 'id';
 		$or = in_array($or, array('ASC','DESC')) ? $or : 'DESC';
 		$attachment = D('attachment');
-		$total = $attachment->total();
+		$where = array('siteid'=>self::$siteid);
+		$total = $attachment->where($where)->total();
 		$page = new page($total, 15);
-		$data = $attachment->order("$of $or")->limit($page->limit())->select();		
+		$data = $attachment->where($where)->order("$of $or")->limit($page->limit())->select();		
 
 		include $this->admin_tpl('attachment_list');
 	}
@@ -31,7 +42,7 @@ class index extends common{
 		$of = in_array($of, array('id','module','filesize','uploadtime','username','uploadip')) ? $of : 'id';
 		$or = in_array($or, array('ASC','DESC')) ? $or : 'DESC';
 		$attachment = D('attachment');
-		$where = array();
+		$where = array('siteid' => self::$siteid);
 		if(isset($_GET['dosubmit'])){
 			if(isset($_GET['originname']) && $_GET['originname']){
 				$where['originname'] = '%'.$_GET['originname'].'%';
@@ -63,8 +74,10 @@ class index extends common{
 		$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 		$info = D('attachment')->where(array('id'=>$id))->find();
 		if($info){
-			echo '<p style="text-align:center;">';
-			echo $info['isimage'] ? '<img src="'.$info['filepath'].$info['filename'].'" style="max-width:100%">' : '<img src="'.(in_array($info['fileext'], array('zip', 'rar')) ? STATIC_URL.'images/ext/rar.png' : STATIC_URL.'images/ext/blank.png').'" title="'.$info['originname'].'"><a style="font-size:14px;display:block;margin-top:20px;" href="'.$info['filepath'].$info['filename'].'">点击下载</a>';
+			echo '<p style="text-align:center;margin-top:50px">';
+			echo $info['isimage'] ? '<img src="'.$info['filepath'].$info['filename'].'" style="max-width:100%">' : '<img src="'.file_icon($info['filename']).'" title="'.$info['originname'].'" style="width:100px">
+				<span style="display:block;margin-top:8px;font-size:13px;color:#333;">'.$info['originname'].'</span>
+				<a style="font-size:14px;display:block;margin-top:20px;color:#0583e7" href="'.$info['filepath'].$info['filename'].'" download="'.$info['originname'].'">点击下载</a>';
 			echo '</p>';
 		}
 	}
@@ -77,12 +90,21 @@ class index extends common{
 		$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 		$attachment = D('attachment');
 		$info = $attachment->field('filepath,filename')->where(array('id'=>$id))->find();
-		$file = YZMPHP_PATH.strstr($info['filepath'].$info['filename'], C('upload_file'));
-		if(is_file($file)) @unlink($file);
+		$upload_type = C('upload_type', 'host');
+		yzm_base::load_model($upload_type, '', 0);
+		if(!class_exists($upload_type)){
+			return_json(array('status'=>0,'message'=>'附件操作类「'.$upload_type.'」不存在！'));
+		}
+
+		// PHP5.2不支持 $class::$method();
+		$upload = new $upload_type();
+		$res = $upload->deletefile($info);
+		if(!$res)  return_json(array('status'=>0,'message'=>'删除文件「'.$info['filename'].'」失败！'));
+
 		if($attachment->delete(array('id' => $id))){
-			showmsg(L('operation_success'));
+			return_json(array('status'=>1,'message'=>L('operation_success')));
 		}else{
-			showmsg(L('operation_failure'));
+			return_json(array('status'=>0,'message'=>'删除文件「'.$info['filename'].'」失败！'));
 		}
 	}
 
@@ -93,14 +115,48 @@ class index extends common{
 	public function del() {
 		if($_POST && is_array($_POST['id'])){
 			$attachment = D('attachment');
+			$upload_type = C('upload_type', 'host');
+			yzm_base::load_model($upload_type, '', 0);
+			if(!class_exists($upload_type)){
+				return_json(array('status'=>0,'message'=>'附件操作类「'.$upload_type.'」不存在！'));
+			}
+
+			// PHP5.2不支持 $class::$method();
+			$upload = new $upload_type();
 			foreach($_POST['id'] as $val){
 				$info = $attachment->field('filepath,filename')->where(array('id'=>$val))->find();
-				$file = YZMPHP_PATH.strstr($info['filepath'].$info['filename'], C('upload_file'));
-				if(is_file($file)) @unlink($file);
+				$res = $upload->deletefile($info);
+				if(!$res)  return_json(array('status'=>0,'message'=>'删除文件「'.$info['filename'].'」失败！'));
 				$attachment->delete(array('id' => $val));
 			}
-			showmsg(L('operation_success'));
+			return_json(array('status'=>1,'message'=>L('operation_success')));
 		}
+	}
+
+
+	/**
+	 * 附件统计
+	 */
+	public function public_count(){
+		$img_total = D('attachment')->where(array('siteid'=>self::$siteid,'isimage'=>1))->total();
+		$att_total = D('attachment')->where(array('siteid'=>self::$siteid,'isimage'=>0))->total();
+		$total = $img_total+$att_total;
+		
+		$img_size = D('attachment')->field('SUM(filesize)')->where(array('siteid'=>self::$siteid,'isimage'=>1))->one();
+		$att_size = D('attachment')->field('SUM(filesize)')->where(array('siteid'=>self::$siteid,'isimage'=>0))->one();
+		$total_size = $img_size+$att_size;
+
+		$data = array(
+			'img_total' => $img_total,
+			'att_total' => $att_total,
+			'total' => $total,
+			'img_size' => sizecount($img_size),
+			'att_size' => sizecount($att_size),
+			'total_size' => sizecount($total_size),
+			'img_proportion' => $total_size ? round($img_size/$total_size*100, 2) : 0,
+			'att_proportion' => $total_size ? round($att_size/$total_size*100, 2) : 0,
+		);
+		return_json(array('status'=>1,'message'=>L('operation_success'),'data'=>$data));
 	}
 	
 }

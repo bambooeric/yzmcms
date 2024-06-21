@@ -25,18 +25,25 @@
 					<label class="form-label col-xs-4 col-sm-2"><span class="c-red">*</span>英文目录：</label>
 					<div class="formControls col-xs-8 col-sm-9">
 						<input type="text" name="catdir" value="<?php echo $data['catdir']; ?>" class="input-text" placeholder="支持多级目录，如： qita/guanyu">
-						<i class="Hui-iconfont" style="position:absolute;top:5px;right:23px;cursor:pointer;" title="继承父级目录" onclick="change_dir()">&#xe68f;</i>
+						<i class="yzm-iconfont yzm-iconshuaxin" style="position:absolute;top:5px;right:23px;cursor:pointer;" title="继承父级目录" onclick="change_dir()"></i>
 					</div>
 				</div>
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目图片：</label>
 					<div class="formControls col-xs-8 col-sm-9">
 						<input class="input-text" type="text" name="catimg" style="width:400px" id="uploadfile"  value="<?php echo $data['catimg']; ?>" onmouseover="yzm_img_preview('uploadfile', this.value)"  onmouseout="layer.closeAll();">
-						<a href="javascript:;" onclick="yzm_upload_att('<?php echo U('attachment/api/upload_box', array('module'=>ROUTE_M));?>')" class="btn btn-primary radius upload-btn"><i class="Hui-iconfont">&#xe642;</i> 浏览文件</a>
+						<a href="javascript:;" onclick="yzm_upload_att('<?php echo U('attachment/api/upload_box', array('module'=>ROUTE_M));?>')" class="btn btn-primary radius upload-btn"><i class="yzm-iconfont yzm-iconshangchuan"></i> 浏览文件</a>
 					</div>
 				</div>
 				<div class="row cl">
-					<label class="form-label col-xs-4 col-sm-2">在导航显示：</label>
+					<label class="form-label col-xs-4 col-sm-2">打开方式：</label>
+					<div class="formControls col-xs-8 col-sm-9">
+						<label class="label_radio"><input name="target" type="radio" value="_self" <?php echo $data['target']=='_self' ? 'checked="checked"' : ''; ?>> 本窗口打开</label>
+						<label class="label_radio"><input name="target" type="radio" value="_blank" <?php echo $data['target']=='_blank' ? 'checked="checked"' : ''; ?>> 新窗口打开</label>
+					</div>
+				</div>
+				<div class="row cl">
+					<label class="form-label col-xs-4 col-sm-2">导航显示：</label>
 					<div class="formControls col-xs-8 col-sm-9">
 						<label class="label_radio"><input name="display" type="radio" value="1" <?php echo $data['display']==1 ? 'checked="checked"' : ''; ?>> 是</label>
 						<label class="label_radio"><input name="display" type="radio" value="0" <?php echo $data['display']==0 ? 'checked="checked"' : ''; ?>> 否</label>
@@ -46,17 +53,19 @@
 			<div class="tabCon">
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2"><span class="c-red">*</span>单页模板：</label>
-					<div class="formControls col-xs-8 col-sm-9">
-						<span class="select-box">
-						<select name="category_template" class="select">
+					<div class="formControls col-xs-8 col-sm-9 yzm-explain-box">
+						<span class="select-box" style="width:400px">
+						<select name="category_template" id="category_template" class="select">
 						  <?php 
 						      foreach($category_temp as $key => $val){
 									$str = $key==$data['category_template'] ? ' selected="selected" ' : '';
 									echo '<option value="'.$key.'"'.$str.'>'.$val.'('.$key.')</option>';
 							  }
+							  if(!$category_temp) echo '<option value="">暂无模板</option>';
 						  ?>
 						</select>
 						</span>
+						<span class="yzm-explain">单页模板命名规则：<br>category_<i class="model_table"><?php echo $tablename;?></i>.html<br> 或 category_<i class="model_table"><?php echo $tablename;?></i>_*.html</span>
 					</div>
 				</div>						
 			</div>
@@ -64,23 +73,29 @@
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目标题：</label>
 					<div class="formControls col-xs-8 col-sm-9">
-						<input type="text" name="seo_title" value="<?php echo $data['seo_title']; ?>" class="input-text">
+						<input type="text" name="seo_title" value="<?php echo $data['seo_title']; ?>" placeholder="栏目SEO标题，一般不超过80个字符" class="input-text">
 					</div>
 				</div>
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目关键词：</label>
 					<div class="formControls col-xs-8 col-sm-9">
-						<input type="text" name="seo_keywords" value="<?php echo $data['seo_keywords']; ?>" class="input-text">
+						<input type="text" name="seo_keywords" value="<?php echo $data['seo_keywords']; ?>" placeholder="一般不超过100个字符，多个关键词用英文逗号“,”隔开" class="input-text">
 					</div>
 				</div>
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目描述：</label>
 					<div class="formControls col-xs-8 col-sm-9">
-						<textarea class="textarea" name="seo_description"><?php echo $data['seo_description']; ?></textarea>
+						<textarea class="textarea" name="seo_description" placeholder="栏目SEO描述，一般不超过200个字符"><?php echo $data['seo_description']; ?></textarea>
 					</div>
 				</div>
 			</div>
 			<div class="tabCon">
+				<div class="row cl">
+					<label class="form-label col-xs-4 col-sm-2">英文标题：</label>
+					<div class="formControls col-xs-8 col-sm-9">
+						<input type="text" name="entitle" value="<?php echo $data['entitle']; ?>" placeholder="英文标题可留空" class="input-text">
+					</div>
+				</div>
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目副标题：</label>
 					<div class="formControls col-xs-8 col-sm-9">
@@ -92,35 +107,36 @@
 					<div class="formControls col-xs-8 col-sm-9">
 						<input type="text" name="mobname" value="<?php echo $data['mobname']; ?>" placeholder="手机版栏目名称，为空则与电脑端一致" class="input-text">
 					</div>
-				</div>
-				<div class="row cl">
-					<label class="form-label col-xs-4 col-sm-2">手机版地址：</label>
-					<div class="formControls col-xs-8 col-sm-9">
-						<input type="text" name="moblink" value="<?php echo $data['moblink']; ?>" placeholder="手机版栏目地址，为空则为系统默认" class="input-text">
-					</div>
 				</div>	
+				<div class="row cl">
+					<label class="form-label col-xs-4 col-sm-2">绑定域名：</label>
+					<div class="formControls col-xs-8 col-sm-9">
+						<input type="text" name="domain" value="<?php echo $data['domain']; ?>" placeholder="域名格式以http开头" class="input-text">
+					</div>
+				</div>
 				<div class="row cl">
 					<label class="form-label col-xs-4 col-sm-2">栏目排序：</label>
 					<div class="formControls col-xs-8 col-sm-9">
-						<input type="text" name="listorder" value="<?php echo $data['listorder']; ?>" class="input-text" style="width:200px">
+						<input type="text" name="listorder" value="<?php echo $data['listorder']; ?>" class="input-text">
 					</div>
 				</div>					
 			</div>
 
 		</div>
-		<div class="row cl">
-			<div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-2">
-				<input type="hidden" name="dosubmit" value="1"><input type="hidden" name="catid" value="<?php echo $catid;?>"><input type="hidden" name="cpath" value="<?php echo $data['arrparentid'];?>">
-				<input class="dosubmit w_120 btn-primary radius" type="submit" value="提交">
-			 	<input class="btn w_120 btn-default radius h35" type="button" value="取消" onclick="yzmcms_close()">
-			</div>
+		<div class="footer_btn_large">
+			<input type="hidden" name="type" value="<?php echo $type;?>">
+			<input type="hidden" name="catid" value="<?php echo $catid;?>">
+			<input type="hidden" name="cpath" value="<?php echo $data['arrparentid'];?>">
+			<input type="hidden" name="dosubmit" value="1">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
 		</div>
 	</form>
 </div>
 
 <?php include $this->admin_tpl('footer');?>
 
-<script type="text/javascript" src="<?php echo STATIC_URL;?>js/pinyin.js"></script> 
+<script type="text/javascript" src="<?php echo STATIC_URL;?>js/yzm-pinyin.js"></script> 
 
 <script type="text/javascript">
 function yzmcms_pinyin(){
@@ -148,20 +164,26 @@ function change_dir(){
 function dosub(obj){
 	var reg = /^[a-zA-Z]{1}([a-zA-Z0-9]|[-/]){0,29}$/;
 	if($("input[name='catname']").val()==''){
-		layer.msg('栏目名称不能为空！');
+		layer.msg('栏目名称不能为空！', {icon:2});
 		return false;
 	}
 	if($("input[name='catdir']").val()==''){
-		layer.msg('栏目目录不能为空！');
+		layer.msg('栏目目录不能为空！', {icon:2});
 		return false;
 	}
 	if(!reg.test($("input[name='catdir']").val())){
-		layer.msg('栏目目录只能是拼音或英文字符！');
+		layer.msg('栏目目录只能是拼音或英文字符！', {icon:2});
 		return false;
 	}
-	if($("select[name='category_template']").val()=='0'){
-		layer.msg('请选择单页模板！');
+	if($("select[name='category_template']").val()==''){
+		layer.msg('请选择单页模板！', {icon:2});
 		$.Huitab("#tab_system .tabBar span","#tab_system .tabCon","current","click","1");
+		return false;
+	}
+	var reg = /^http(.+)\/$/;
+	var domain = $("input[name='domain']").val();
+	if(domain!='' && !reg.test(domain)){
+		layer.msg('绑定的栏目域名格式为http://www.yzmcms.com/，请以“/”结尾！', {icon:2});
 		return false;
 	}
 	$.ajax({
@@ -171,9 +193,11 @@ function dosub(obj){
 		dataType: "json", 
 		success: function (msg) {
 			if(msg.status == 1){
-				parent.location.reload();       
+				layer.msg(msg.message, {icon:1,time:1000}, function(){
+					parent.location.reload();   
+				});
 			}else{
-				layer.msg(msg.message);
+				layer.msg(msg.message, {icon:2});
 			}
 		}
 	})

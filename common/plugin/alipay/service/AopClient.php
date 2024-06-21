@@ -411,8 +411,17 @@ class AopClient {
 	protected function buildRequestForm($para_temp) {
 		
 		$sHtml = "<form id='alipaysubmit' name='alipaysubmit' action='".$this->gatewayUrl."?charset=".trim($this->postCharset)."' method='POST'>";
-		while (list ($key, $val) = each ($para_temp)) {
-			if (false === $this->checkEmpty($val)) {
+		// while (list ($key, $val) = each ($para_temp)) {
+		// 	if (false === $this->checkEmpty($val)) {
+		// 		//$val = $this->characet($val, $this->postCharset);
+		// 		$val = str_replace("'","&apos;",$val);
+		// 		//$val = str_replace("\"","&quot;",$val);
+		// 		$sHtml.= "<input type='hidden' name='".$key."' value='".$val."'/>";
+		// 	}
+  		//	}
+
+        foreach ($para_temp as $key => $val) {
+        	if (false === $this->checkEmpty($val)) {
 				//$val = $this->characet($val, $this->postCharset);
 				$val = str_replace("'","&apos;",$val);
 				//$val = str_replace("\"","&quot;",$val);
@@ -646,7 +655,7 @@ class AopClient {
 	 *  公钥是否是读取字符串还是读取文件，是根据初始化传入的值判断的。
 	 **/
 	public function rsaCheckV1($params, $rsaPublicKeyFilePath,$signType='RSA') {
-			$sign = $params['sign'];
+			$sign = isset($params['sign']) ? $params['sign'] : '';
 			$params['sign_type'] = null;
 			$params['sign'] = null;
 			return $this->verify($this->getSignContent($params), $sign, $rsaPublicKeyFilePath,$signType);
@@ -802,7 +811,7 @@ class AopClient {
 		return $strnull;
 	}
 
-	function splitCN($cont, $n = 0, $subnum, $charset) {
+	function splitCN($cont, $n, $subnum, $charset) {
 		//$len = strlen($cont) / 3;
 		$arrr = array();
 		for ($i = $n; $i < strlen($cont); $i += $subnum) {
@@ -815,7 +824,7 @@ class AopClient {
 		return $arrr;
 	}
 
-	function subCNchar($str, $start = 0, $length, $charset = "gbk") {
+	function subCNchar($str, $start, $length, $charset = "gbk") {
 		if (strlen($str) <= $length) {
 			return $str;
 		}

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * 内容模型处理   
  * 
@@ -13,19 +12,20 @@ class content {
 	/**
 	 * 阅读收费检测
 	 */
-	public static function check_readpoint($flag, $readpoint, $paytype, $url) {
+	public static function check_readpoint($data) {
 		$userid = intval(get_cookie('_userid'));
-		if(!$userid){
-			showmsg(L('need_login'), url_referer(get_url()), 2);
-		}
-		
-		//检查24小时内是否支付过
-		$data = D('pay_spend')->field('creat_time')->where(array('userid'=>$userid,'remarks'=>$flag))->order('id DESC')->find();
-		if($data && $data['creat_time']+86400 > SYS_TIME) {
+		if(!$userid) return false;
+
+		//检查是否是作者自己
+		if(!$data['issystem'] && $data['userid']==$userid) return true;
+
+		//检查一个月内是否支付过
+		$data = D('pay_spend')->field('creat_time')->where(array('userid'=>$userid,'remarks'=>$data['catid'].'_'.$data['id']))->order('id DESC')->find();
+		if($data && $data['creat_time']+2592000 > SYS_TIME) {
 			return true;
 		}
 		
-		$data = D('member')->field('point,amount,vip,overduedate')->where(array('userid'=>$userid))->find();
+		$data = D('member')->field('vip,overduedate')->where(array('userid'=>$userid))->find();
 		
 		//检查是否为vip会员
 		if($data['vip']){
@@ -33,31 +33,19 @@ class content {
 			D('member')->update(array('vip'=>0), array('userid'=>$userid));
 		}
 		
-		if($paytype==1){
-			$point = $data['point'];
-			$lang = L('point');
-		}else{
-			$point = $data['amount'];
-			$lang = L('money');
-		}
-		if($point < $readpoint){
-			showmsg(L('not_enough').$readpoint.$lang.'，'.L('can_not_read'), 'stop');
-		}else{
-			$parurl = 'par='.string_auth($flag.'|'.$readpoint.'|'.$paytype.'|'.$url);
-			include template('index', 'authority_confirm');
-			exit();
-		}
+		return false;
 	}
 
 
 	/**
 	 * 内容分页处理
 	 */
-	public static function content_page($content) {
+	public static function content_page($content, $page, &$page_section) {
 		$arr = explode('_yzm_content_page_', $content);
-		$page = isset($_GET['page']) ? max(intval($_GET['page']), 1) : 1;
+		$page = max($page, 1);
 		$total_page = count($arr);
 		$off = $page-1<$total_page ? $page-1 : $total_page-1;
+		$page_section = '_'.L('section').($off+1).L('page');
 
 		$pages = '<div id="page">';
 		if(URL_MODEL == 3){

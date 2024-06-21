@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 yzm_base::load_sys_class('collection','',0);
@@ -24,7 +34,8 @@ class collection_content extends common {
 	 */
  	public function add() {
  		if(isset($_POST['dosubmit'])) {
-			if(!$_POST['urlpage']) showmsg('网址配置不能为空！');						
+			if(!$_POST['urlpage']) showmsg('网址配置不能为空！');	
+			$_POST['name']	= htmlspecialchars($_POST['name']);	
 			$res = D('collection_node')->insert($_POST);
 			if($res){
 				showmsg(L('operation_success'), U('init'), 1);
@@ -45,7 +56,8 @@ class collection_content extends common {
 		$collection_node = D('collection_node');
 		if(isset($_POST['dosubmit'])) {
 			$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-		
+			
+			$_POST['name']	= htmlspecialchars($_POST['name']);	
 			if(D('collection_node')->update($_POST, array('nodeid' => $id))){
 				showmsg(L('operation_success'), U('init'), 1);
 			}else{
@@ -67,7 +79,7 @@ class collection_content extends common {
 	public function del() {
 		if($_POST && is_array($_POST['id'])){
 			if(D('collection_node')->delete($_POST['id'], true)){
-				showmsg(L('operation_success'));
+				showmsg(L('operation_success'), '', 1);
 			}else{
 				showmsg(L('operation_failure'));
 			}
@@ -118,7 +130,6 @@ class collection_content extends common {
 		}else{
 			$article = '列表规则错误！';
 		}		
-		
 		
 		include $this->admin_tpl('collection_test');
 	}
@@ -208,7 +219,7 @@ class collection_content extends common {
 			$article = collection::get_content($v['url']);
 			if($data['sourcecharset'] == 'gbk') $article = array_iconv($article);	
 			$article = collection::get_filter_html($article, $this->get_config($data));
-			if($data['down_attachment']) $article['content'] = grab_image($article['content'], $this->get_baseurl($v['url']));
+			if($data['down_attachment']) $article['content'] = down_remote_img($article['content'], $this->get_baseurl($v['url']));
 			$collection_content->update(array('status'=>1, 'data'=>array2string($article)), array('id'=>$v['id']));
 			$i++;	
 		}
@@ -245,13 +256,10 @@ class collection_content extends common {
 		if(!isset($_POST['dosubmit'])) showmsg(L('lose_parameters'), 'stop');
 		
 		$ids = safe_replace($_POST['ids']);
-		$ids_arr = explode(',', $ids);
-		$ids_arr = array_map('intval', $ids_arr);
-		$ids = join(',', $ids_arr);
 		
 		$collection_content = D('collection_content');
 		$order = $_POST['order'] =='1' ? 'id ASC' : 'id DESC';
-		$res = $collection_content->field('id AS cid,status,data')->where('id IN('.$ids.')')->order($order)->select(); 
+		$res = $collection_content->field('id AS cid,status,data')->wheres(array('id'=>array('in', explode(',', $ids), 'intval')))->order($order)->select(); 
 		
 		$data = array();
 		$data['nickname'] = safe_replace($_POST['nickname']);
@@ -259,16 +267,14 @@ class collection_content extends common {
 		$data['click'] = intval($_POST['click']);
 		$data['catid'] = intval($_POST['catid']);
 		$data['listorder'] = 10;
-		$data['system'] = 1;
+		$data['issystem'] = 1;
 		$data['userid'] = $_SESSION['adminid'];
 		$data['username'] = $_SESSION['adminname'];
 		
 		$modelid = get_category($data['catid'], 'modelid');
 		if(!$modelid)  showmsg(L('illegal_operation'), 'stop');
 		$content_tabname = D(get_model($modelid));
-		
-		$site_name = get_config('site_name');
-		
+			
 		$i = 0;
 		foreach($res as $v){
 			if($v['status'] != 1) continue;
@@ -279,19 +285,23 @@ class collection_content extends common {
 			//自动提取缩略图
 			if($_POST['auto_thumb']) {
 				$img = match_img($data['content']);
-				$data['thumb'] = $img ? thumb($img) : '';
+				$data['thumb'] = $img ? thumb($img, get_config('thumb_width'), get_config('thumb_height')) : '';
 			}
 
 			//自动提取内容摘要
 			if($_POST['auto_description']) {
-				$data['description'] = str_cut(trim(strip_tags($data['content'])), 200);
+				$data['description'] = str_cut(trim(strip_tags($data['content'])), 250);
 			}
 			
 			$data['updatetime'] = $data['inputtime'];
-			$data['seo_title'] = $data['title'].'_'.$site_name;
 			$id = $content_tabname->insert($data);
-		
 			$url = get_content_url($data['catid'], $id);
+
+			$data['siteid'] = self::$siteid;
+			$data['modelid'] = $modelid;
+			$data['id'] = $id;
+			$data['url'] = $url;
+			D('all_content')->insert($data);
 			$content_tabname->update(array('url' => $url), array('id'=>$id));
 			$collection_content->update(array('status' => 2), array('id'=>$v['cid']));
 			$i++;

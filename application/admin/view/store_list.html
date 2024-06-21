@@ -3,7 +3,7 @@
 </head>
 
 <body>
-    <nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 模块管理 <span class="c-gray en">&gt;</span> 应用商店 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新"><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+    <nav class="breadcrumb"><i class="yzm-iconfont yzm-iconai-home"></i> 首页 <span class="c-gray en">&gt;</span> 模块管理 <span class="c-gray en">&gt;</span> 应用商店 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新"><i class="yzm-iconfont yzm-iconshuaxin"></i></a></nav>
     <div class="page-container">
         <div>
             <form action="<?php echo U(ROUTE_A);?>" method="get">
@@ -31,29 +31,29 @@
                         <option value="0" <?php if(isset($_GET['system'])&&$_GET['system']==0) echo 'selected';?>>第三方</option>
                     </select>
                 </span>
-                <button name="dosubmit" class="btn btn-success radius" type="submit" value="1"><i class="Hui-iconfont">&#xe665;</i> 搜索</button>
-                <a href="https://bbs.yzmcms.com/store/" target="_blank" class="btn btn-secondary radius"><i class="Hui-iconfont">&#xe603;</i> 我要发布</a>
+                <button name="dosubmit" class="btn btn-success radius" type="submit" value="1"><i class="yzm-iconfont yzm-iconsousuo"></i> 搜索</button>
+                <a href="https://www.yzmcms.com/lianxi/" target="_blank" class="btn btn-primary radius"><i class="yzm-iconfont yzm-iconfabusekuai"></i> 我要发布</a>
             </form>
         </div>
-        <table class="table table-border table-bordered table-bg table-hover mt-20">
+        <table class="table table-border table-bg table-hover mt-15">
             <thead>
                 <tr class="text-c">
                     <th class="text-l">应用名称</th>
                     <th class="text-l">应用说明</th>
-                    <th>版本</th>
-                    <th>作者</th>
-                    <th>价格</th>
-                    <th>更新日期</th>
-                    <th>操作</th>
+                    <th width="50">版本</th>
+                    <th width="60">作者</th>
+                    <th width="45">价格</th>
+                    <th width="70">更新日期</th>
+                    <th width="70">操作</th>
                 </tr>
             </thead>
             <tbody>
-                <?php 
+            <?php 
 			   foreach($data as $val){
-			 ?>
+			?>
                 <tr class="text-c">
                     <td class="text-l">
-                        <i class="Hui-iconfont">&#xe67f;</i> <a href="https://bbs.yzmcms.com/store/index/show/id/<?php echo $val['id'];?>.html" target="_blank">
+                        <i class="yzm-iconfont yzm-iconai-home"></i> <a href="<?php echo $val['url'];?>" target="_blank">
                             <?php echo $val['title'];?></a>
                     </td>
                     <td class="text-l">
@@ -71,22 +71,22 @@
                     <td>
                         <?php echo date('Y-m-d', $val['updatetime']);?>
                     </td>
-                    <td><a href="https://bbs.yzmcms.com/store/index/show/id/<?php echo $val['id'];?>.html" target="_blank" class="btn-mini btn-secondary">查看购买</a></td>
+                    <td><a href="<?php echo $val['url'];?>" target="_blank" class="btn-mini btn-primary">查看购买</a></td>
                 </tr>
                 <?php 
-			   }
-			   if(!$data){
-			   		echo '<td colspan="7" class="text-c">暂无数据~</td>';
-			   }	 
-			?>
+			     }	 
+			    ?>
             </tbody>
         </table>
-        <div id="page"><span class="page_left">共
+        <?php if(!$data){ ?><div class="yzm_no_data"><i class="yzm-iconfont yzm-iconshuoming"></i> 暂无数据</div><?php } ?>
+        <div id="page">
+            <span class="page_left">共
                 <?php echo $total?>条记录，共
                 <?php echo $page->total()?>页，当前显示第
-                <?php echo $page->getpage()?>页</span>
-            <span class="page_right">
-                <?php echo $page->getfull();?></span></div>
+                <?php echo $page->getpage()?>页
+            </span>
+            <span class="page_right"><?php echo $page->getfull();?></span>
+        </div>
     </div>
     <?php include $this->admin_tpl('footer');?>
 </body>

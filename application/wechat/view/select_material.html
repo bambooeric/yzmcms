@@ -15,19 +15,20 @@
 	</span>
     <span class="select-box inline">
 		<select name="type" class="select">
-		<option value="">所有类型</option>
-		<option <?php if(isset($_GET['type']) && $_GET['type']=='news'){?> selected <?php }?> value="news">图文</option>	
-		<option <?php if(isset($_GET['type']) && $_GET['type']=='image'){?> selected <?php }?> value="image">图片</option>
-		<option <?php if(isset($_GET['type']) && $_GET['type']=='voice'){?> selected <?php }?> value="voice">语音</option>	
-		<option <?php if(isset($_GET['type']) && $_GET['type']=='video'){?> selected <?php }?> value="video">视频</option>	
-		<option <?php if(isset($_GET['type']) && $_GET['type']=='thumb'){?> selected <?php }?> value="thumb">缩略图</option>	
+			<option value="">所有类型</option>
+			<option <?php if(isset($_GET['type']) && $_GET['type']=='news'){?> selected <?php }?> value="news">图文</option>	
+			<option <?php if(isset($_GET['type']) && $_GET['type']=='image'){?> selected <?php }?> value="image">图片</option>
+			<option <?php if(isset($_GET['type']) && $_GET['type']=='voice'){?> selected <?php }?> value="voice">语音</option>	
+			<option <?php if(isset($_GET['type']) && $_GET['type']=='video'){?> selected <?php }?> value="video">视频</option>	
+			<option <?php if(isset($_GET['type']) && $_GET['type']=='thumb'){?> selected <?php }?> value="thumb">缩略图</option>	
 		</select>
 	</span>
-    <button name="dosubmit" class="btn btn-success" type="submit" value="1"><i class="Hui-iconfont">&#xe665;</i> 搜索</button>
+    <button name="dosubmit" class="btn btn-success radius" type="submit" value="1"><i class="yzm-iconfont yzm-iconsousuo"></i> 搜索</button>
+    <a href="<?php echo U(ROUTE_A);?>" class="btn btn-primary radius"><i class="yzm-iconfont yzm-iconshuaxin"></i> 重置</a>
 	 </form>
 	</div>
   <form method="post" action="" id="myform" class="mt-10">
-  <table class="table table-border table-bordered table-bg table-hover">
+  <table class="table table-border table-bg table-hover">
     <thead>
       <tr class="text-c">
         <th width="25">选择</th>
@@ -53,7 +54,8 @@
 		?>
     </tbody>
   </table>
-  <input class="dosubmit w_120 btn-primary radius mt-10" name="dosubmit" type="button" onclick="dosub()" value="确定">
+  <?php if(!$data){ ?><div class="yzm_no_data"><i class="yzm-iconfont yzm-iconshuoming"></i> 暂无数据</div><?php } ?>
+  <input class="dosubmit w_100 btn-primary radius mt-10" name="dosubmit" type="button" onclick="dosub()" value="确定">
   </form>
   <div id="page"><span class="page_left">共<?php echo $total?>条记录，共<?php echo $page->total()?>页，当前显示第<?php echo $page->getpage()?>页</span>
   <span class="page_right"><?php echo $page->getfull();?></span></div>

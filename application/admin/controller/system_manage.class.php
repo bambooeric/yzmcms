@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 yzm_base::load_sys_class('page','',0);
@@ -10,7 +20,8 @@ class system_manage extends common {
 	 */
 	public function init() {
 		$data = get_config();
-		$theme_list = get_theme_list();
+		$pc_theme_list = get_theme_list('index');
+		$wap_theme_list = get_theme_list('mobile');
 		include $this->admin_tpl('system_set');
 	}
 	
@@ -20,6 +31,7 @@ class system_manage extends common {
 	 */
 	public function member_set() {
 		$data = get_config();
+		$member_theme_list = get_theme_list('member');
 		include $this->admin_tpl('member_set', 'member');
 	}
 	
@@ -30,29 +42,23 @@ class system_manage extends common {
 	 */
 	public function save() {
 		yzm_base::load_common('function/function.php', 'admin');
-		if(isset($_POST['dosubmit'])){
-			if(isset($_POST['mail_inbox']) && $_POST['mail_inbox']){
-				if(!is_email($_POST['mail_inbox'])) showmsg(L('mail_format_error'));
-			}
-			if(isset($_POST['upload_types'])){
-				if(empty($_POST['upload_types'])) showmsg('允许上传附件类型不能为空！', 'stop');
-			}
+		if(is_ajax()){
 			$arr = array();
 			$config = D('config');
 			foreach($_POST as $key => $value){
-				if(in_array($key, array('site_theme','watermark_enable','watermark_name','watermark_position'))) {
-					$value = safe_replace(trim($value));
+				if(in_array($key, array('error_log_save','site_theme','watermark_enable','watermark_name','watermark_position'))) {
+					$value = in_array($key, array('error_log_save','watermark_enable')) ? intval($value) : safe_replace(trim($value));
 					$arr[$key] = $value;
 				}else{
-					if($key!='site_code'){
-						$value = htmlspecialchars($value);
+					if($key != 'site_code'){
+						$value = htmlspecialchars(trim($value));
 					}
 				}
 				$config->update(array('value'=>$value), array('name'=>$key));
 			}
 			set_config($arr);
 			delcache('configs');
-			showmsg(L('operation_success'), '', 1);
+			return_json(array('status'=>1,'message'=>L('operation_success')));
 		}
 	}		
 
@@ -64,7 +70,7 @@ class system_manage extends common {
 		if(isset($_POST['dosubmit'])){
 			D('config')->update(array('value'=>$_POST['prohibit_words']), array('name'=>'prohibit_words'), true);
 			delcache('configs');
-			showmsg(L('operation_success'));
+			showmsg(L('operation_success'), '', 1);
 		}
 		include $this->admin_tpl('prohibit_words');
 	}
@@ -74,10 +80,18 @@ class system_manage extends common {
 	 * 测试邮件配置
 	 */
 	public function public_test_mail() {
+		$config = D('config');
+		foreach($_POST as $key => $value){
+			if(in_array($key, array('mail_server','mail_port','mail_from','mail_auth','mail_user','mail_pass'))) {
+				$config->update(array('value'=>trim($value)), array('name'=>$key), true);
+			}
+		}
+		delcache('configs');
+
 		if(sendmail($_POST['mail_to'], 'YzmCMS邮件测试', '这是一封测试邮件，如果您成功接收此邮件，说明您的邮件配置正确！')){
-			exit('发送邮件成功！');
+			return_json(array('status'=>1, 'message'=>'发送邮件成功！'));
 		}else{
-			exit('发送邮件失败！');
+			return_json(array('status'=>0, 'message'=>'发送邮件失败！'));
 		}	
 	}
 	
@@ -100,9 +114,12 @@ class system_manage extends common {
 	public function user_config_add() {
 		if(isset($_POST['dosubmit'])){
 			$config = D('config');
+			$_POST['name'] = trim($_POST['name']);
+			$_POST['value'] = trim($_POST['value']);
 			$res = $config->where(array('name' => $_POST['name']))->find();
 			if($res) return_json(array('status'=>0,'message'=>'配置名称已存在！'));
 			if(empty($_POST['value']))  return_json(array('status'=>0,'message'=>'配置值不能为空！'));
+			$_POST = new_html_special_chars($_POST);
 			
 			$_POST['type'] = 99;
 			if(in_array($_POST['fieldtype'], array('select','radio'))){
@@ -128,11 +145,11 @@ class system_manage extends common {
 	public function user_config_edit() {
 		if(isset($_POST['dosubmit'])) {
 			$data = array();
-			$data['title'] = $_POST['title'];
-			$data['value'] = $_POST['value'];
-			$data['status'] = $_POST['status'];
+			$data['title'] = trim($_POST['title']);
+			$data['value'] = trim($_POST['value']);
+			$data['status'] = intval($_POST['status']);
 			
-			if(D('config')->update($data, array('id' => intval($_POST['id'])))){
+			if(D('config')->update($data, array('id' => intval($_POST['id'])), true)){
 				delcache('configs');
 				return_json(array('status'=>1,'message'=>L('operation_success')));
 			}else{
@@ -155,7 +172,7 @@ class system_manage extends common {
 		if($_POST && is_array($_POST['id'])){
 			if(D('config')->delete($_POST['id'], true)){
 				delcache('configs');
-				showmsg(L('operation_success'));
+				showmsg(L('operation_success'), '', 1);
 			}else{
 				showmsg(L('operation_failure'));
 			}
@@ -211,6 +228,24 @@ class system_manage extends common {
 			include $this->admin_tpl('data_import');	
 		}
 	}
+
+
+	/**
+	 * 启用禁用
+	 */
+	public function public_change_status() {
+		if(is_post()){
+			$id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+			$value = isset($_POST['value']) ? intval($_POST['value']) : 0;
+			
+			if(D('config')->update(array('status'=>$value), array('id' => $id))){
+				delcache('configs');
+				return_json(array('status'=>1,'message'=>L('operation_success')));
+			}else{
+				return_json();
+			}
+		}
+	}
 	
 	
 	/*
@@ -228,7 +263,7 @@ class system_manage extends common {
 				if($val){
 				echo form::$fieldtype('value', $val, string2array($setting));
 				}else{
-				echo '<textarea name="setting" class="textarea w_300"  placeholder="选项用“|”分开，如“男|女|人妖”"></textarea> &nbsp;<input type="text" name="value" class="input" style="width:180px" placeholder="默认值">';
+				echo '<textarea name="setting" class="textarea w_300"  placeholder="多个选项用“|”分开，如“男|女|未知”"></textarea> &nbsp;<input type="text" name="value" class="input" style="width:180px" placeholder="默认值">';
 				}
 		}elseif($fieldtype == 'image' || $fieldtype == 'attachment'){
 				echo form::$fieldtype('value', $val);

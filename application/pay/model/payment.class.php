@@ -15,7 +15,7 @@ class payment {
      */
 	public function pay($paytype, $params){
 		$data = D('pay_mode')->field('enabled,action')->where(array('id'=>$paytype))->find();
-		if(!$data || $data['enabled']==1) showmsg('支付方式不存在或已禁用！', 'stop');
+		if(!$data || !$data['enabled']) showmsg('支付方式不存在或已禁用！', 'stop');
 		$action = $data['action'];
 		if(!$action || !method_exists($this, $action)) showmsg('支付方法不存在！', 'stop');
 		$this->$action($params);
@@ -91,7 +91,7 @@ class payment {
 			// 充值余额/积分
 			if($order['quantity']){
 				$point = yzm_base::load_model('point', 'member');
-				$point->point_add($order['type'], $order['quantity'], 6, $order['userid'], $order['username'], 0, $order['desc'], '', false);				
+				$point->point_add($order['type'], $order['quantity'], 3, $order['userid'], $order['username'], 0, $order['desc'], '', false);				
 			}
             return true;
         } else {
@@ -112,6 +112,7 @@ class payment {
             'total_fee' => $params['money']*100,  //微信支付单位为 ：分
             'product_id' => $params['order_id']
         );
+        if(!class_exists('native')) showmsg('微信支付模块不存在，请联系官方购买！', 'http://www.yzmcms.com/');
         $img = native::getPayImage($params);
         include template('member', 'wxpay');
 	}	

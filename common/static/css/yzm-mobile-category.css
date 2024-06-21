@@ -1,13 +1,13 @@
 @charset "utf-8";
 /**
- * YZMCMS 内容管理系统
+ * YZMCMS 内容管理系统(yzm-cms轻量级开源CMS)
  * @author           袁志蒙  
  * @license          http://www.yzmcms.com
  */
 /* CSS Document */
 
 *{padding:0px;margin:0px;box-sizing:border-box;}
-body{font-size:14px;font-family:Verdana,Tahoma,Helvetica,Arial,sans-serif;line-height:22px;background:#f8f8f8;}
+body{font-size:14px;font-family:Tahoma,Arial,sans-serif;line-height:22px;background:#f8f8f8;}
 div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,button,textarea,p,blockquote,th,td{margin:0px;padding:0px;}
 table{border-collapse:collapse;}
 a,img{border:0;}
@@ -40,10 +40,17 @@ a:hover{color:#2196f3;}
 .yzm-news-list ul li a{color:#666;}
 .yzm-news-list ul li a:hover{color:#2196f3;}
 .yzm-news-list ul li .date{float:right;color:#666;font-size:12px;margin-left:7px;}
+.yzm-news-list ul li .yzm-label{font-size:12px;color:#8d1adc}
+.yzm-news-list ul li .yzm-label2{font-size:12px;color:#c00}
 .yzm-news-list ul li:last-child:{border-bottom:0;}
 .yzm-flag{font-style: normal;font-size: 12px;background:#f60;color:#fff;padding: 2px 3px;font-weight:normal;}
 .yzm-title{background:#eee;font-weight:normal;height:35px;line-height:35px;border-top:#2196f3 2px solid;}
 .yzm-title a{color:#123261;}
+.yzm-news-img{overflow:hidden;margin-bottom:10px;}
+.yzm-news-img ul li{width:50%;float:left;height:175px;padding:10px 10px;text-align:center;}
+.yzm-news-img ul li img{width:100%;height:120px;}
+.yzm-news-img ul li p{color:#444;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.yzm-news-img ul li .yzm-label{color:#ff5522}
 #page{margin:20px 0;font-size:14px;line-height:30px;text-align:center}
 #page .pageinfo{display:none}
 #page  a{border:1px solid #ddd;background:#fff;color:#808080;padding:4px 10px;margin-left:5px;transition:all 0.2s}
@@ -56,13 +63,24 @@ a:hover{color:#2196f3;}
 .yzm-search-title h2 span{margin:0 3px;}
 .yzm-main-article{padding:10px;overflow:hidden;}
 .yzm-main-article h1{font-size:18px;margin-bottom: 20px}
-.yzm-main-article .info{font-size:14px;color:#666;margin-bottom:30px;border-bottom: 1px dashed #ddd;padding-bottom:10px}
+.yzm-info{font-size:14px;color:#666;margin-bottom:20px;border-bottom: 1px dashed #ddd;padding-bottom:10px;}
+.yzm-description{color:#888888;border:1px solid #f3f3f3;padding:10px;background:#f6f6f6;line-height:23px;font-size:13px;margin-bottom:15px}
+.yzm-content .yzm-down-info{margin-bottom: 10px;color: #4c4c4c}
+.yzm-content .yzm-down-info img{max-width: 100%;margin-bottom: 10px;}
 .yzm-content h2{font-size: 16px;margin:20px 0;padding-left:10px;border-left:3px solid #2196f3;}
 .yzm-content p{font-size:16px;color:#4c4c4c;line-height:30px;}
 .yzm-content img{max-width:100%;}
 .yzm-content a{color:#2196f3;}
 .yzm-content pre{color: #444;font-family: Monaco,Menlo,Consolas,"Courier New",monospace;display: block;margin:10px 0; padding: 9px;border: 1px solid #ccc;border: 1px solid rgba(0,0,0,.15); border-radius: 3px;background-color: #f5f5f5;white-space: pre-wrap;word-wrap: break-word;font-size: 11px;line-height: 20px;word-break: break-all;}
-.yzm-next{font-size:14px;margin-top:10px;}
+.yzm-content-read-tips{text-align:center;margin:30px 0 !important;border:1px dashed #9d9a9a;padding:15px 0;}
+.yzm-content-read-tips span{color:red;margin:0 3px;}
+.yzm-content-read-tips a{color:#0844f7;}
+.yzm-content-read-tips a:hover{color:red;}
+.yzm-title-box{margin-top: 20px;}
+.yzm-title-box h5{font-size: 16px;color:#121212;font-weight: normal;border-left: 3px solid #2196f3;padding-left: 8px}
+.yzm-title-box ul{margin:8px 0}
+.yzm-title-box ul li{background: #fafafa;padding: 10px;}
+.yzm-pre-next{font-size:14px;margin-top:10px;}
 
 .yzm-article-img {overflow:hidden;}
 .yzm-article-img ul{padding:15px 8px;}
@@ -70,6 +88,11 @@ a:hover{color:#2196f3;}
 .yzm-article-img ul li img{float:left;width:30%;height:60px;margin-right:15px;}
 .yzm-article-img ul li p a{color:#333;display:block;font-size: 16px;margin-top: 6px}
 .yzm-article-img ul li span{color:#868686;font-size:14px;}
+
+.yzm-img-ul img{max-width:100%}
+.yzm-price{color:#fd6161;line-height:35px;font-size:18px;margin-bottom:15px;display:inline-block;}
+.yzm-addshopping{cursor:pointer; background: #df3033;border-radius: 3px;display: block;width: 130px;height: 35px;line-height: 35px;text-align: center;color: #fff;transition: 0.3s;font-size: 13px;}
+.yzm-addshopping:hover{background: #ed1316}
 
 /*评论区*/
 .yzm-content-box{margin-top:20px}
@@ -84,6 +107,9 @@ a:hover{color:#2196f3;}
 .yzm-comment-form .emotion:hover{background-position: 2px -28px; color: #666}
 .yzm-comment-submit{background-color: #e6e6e6; background-image: linear-gradient(#fcfcfc, #fcfcfc 25%, #e6e6e6); background-repeat: no-repeat; border-bottom-right-radius: 3px; border-color: #ddd #ddd #aaa; border-style: solid; border-width: 1px; box-shadow: 0 0 1px #fff inset; color: #555; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 14px; height: 32px; position: absolute; right: 0; text-align: center; text-shadow: 0 1px 0 #fff; top: 0; transition: all 0.15s linear 0s; width: 100px; cursor: pointer; border-radius: 2px; margin-top: 5px; outline: none;}
 .yzm-comment-submit:hover{background-position: 0 -15px; color: #121212}
+.yzm-comment-code,.yzm-comment-reply-code{display:inline-block;margin-top:5px}
+.yzm-comment-code img,.yzm-comment-reply-code img{cursor:pointer;margin-right:10px;vertical-align:top;}
+.yzm-comment-code input,.yzm-comment-reply-code input{width:90px;height:35px;line-height:35px;border:1px solid #d9d9d9;outline:none;padding:2px 3px;border-radius:2px}
 .static{position: static; float: right;}
 .yzm-comment-list-box{border: 1px solid #ddd; margin: 25px 0 15px; overflow: hidden;}
 .yzm-comment-list-top{background: #fbfbfb; color: #555; font-size: 14px; padding: 0 12px; height: 30px; line-height: 30px; border-bottom: 1px dotted #ddd;}
@@ -110,7 +136,7 @@ a:hover{color:#2196f3;}
 .yzm-guestbook textarea{border:1px solid #dddddd;font-size:14px;padding:3px 3px;width:100%;height:100px;line-height:25px;margin-bottom:15px;outline:none;color:#454545;border-radius:3px}
 .yzm-guestbook .yzm-input:focus,
 .yzm-guestbook textarea:focus{transition: all 0.218s ease 0s;border: 1px solid #2196f3;}
-.yzm-guestbook .yzm-submit{width:100%;margin:0 auto;background:#2196f3;color:#fff;cursor:pointer;border:none;}
+.yzm-guestbook .yzm-submit{width:100%;margin:0 auto;background:#2196f3;color:#fff;cursor:pointer;border:none;outline:none}
 
 .yzm-back{height:35px;width:35px;position:fixed;bottom:50px;right:10px;z-index:999}
 .yzm-back a{display: table-cell;vertical-align:middle;text-align: center;height:35px;width:35px;background:#2196f3;}

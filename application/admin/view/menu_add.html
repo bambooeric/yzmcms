@@ -10,26 +10,42 @@
 			 <label>上级菜单：</label>
 			 <select  name="parentid" size="1">
 				<option value="0">一级菜单</option>
-			   <?php echo $select_menus;?>			
+			    <?php echo $select_menus;?>			
 			 </select>
 			 </li>		
-			 <li><label><span class="c-red">*</span>菜单名称：</label><input type="text" class="input" placeholder="菜单名称" name="name" value=""></li>	
-			 <li><label><span class="c-red">*</span>模块名：</label><input type="text" class="input" placeholder="模块名" name="m" value=""></li>	
-			 <li><label><span class="c-red">*</span>类名：</label><input type="text" class="input" placeholder="类名" name="c" value=""></li>	
-			 <li><label><span class="c-red">*</span>方法名：</label><input type="text" class="input" placeholder="方法名" name="a" value=""></li>	
-			 <li><label>附加参数：</label><input type="text" class="input" placeholder="为一级菜单时，填写图标字体，子菜单时填写如：id=1&mid=2" name="data"></li>
-			 <li><label>是否显示菜单：</label>
+			 <li>
+			 	<label><span class="c-red">*</span>菜单名称：</label>
+			 	<input type="text" class="input" placeholder="菜单名称" name="name" value="">
+			 </li>	
+			 <li>
+			 	<label><span class="c-red">*</span>模块名：</label>
+			 	<input type="text" class="input" placeholder="模块名" name="m" value="<?php if(isset($parent)) echo $parent['m'];?>">
+			 </li>	
+			 <li>
+			 	<label><span class="c-red">*</span>类名：</label>
+			 	<input type="text" class="input" placeholder="类名" name="c" value="<?php if(isset($parent)) echo $parent['c'];?>">
+			 </li>	
+			 <li>
+			 	<label><span class="c-red">*</span>方法名：</label>
+			 	<input type="text" class="input" placeholder="方法名" name="a" value="">
+			 </li>
+			 <li class="yzm-explain-box">
+			 	<label>附加参数：</label>
+			 	<input type="text" class="input" placeholder="如：id=1&mid=2" name="data">
+			 	<span class="yzm-explain">为一级菜单时，<br>需填写icon图标的class名称</span>
+			 </li>
+			 <li><label>显示菜单：</label>
 			 <span class="span_input">
-			 	<label class="label_radio"><input name="display" type="radio" value="1" checked> 显示</label>
-			 	<label class="label_radio"><input name="display" type="radio" value="0" > 隐藏</label>
+			 	<label class="label_radio"><input name="display" type="radio" value="1" <?php echo isset($parent) ? ($parent['display'] ? 'checked' : '') : 'checked';?>> 是</label>
+			 	<label class="label_radio"><input name="display" type="radio" value="0" <?php echo isset($parent)&&!$parent['display'] ? 'checked' : '';?>> 否</label>
 			 </span>
 			 </li>
-			<li>
-				<input type="hidden" name="dosubmit" value="1">
-			 	<input class="dosubmit w_120 btn-primary radius" name="dosubmit" type="submit" value="提交">
-			 	<input class="btn w_120 btn-default radius h35" type="button" value="取消" onclick="yzmcms_close()">
-			</li>
 		</ul>
+		<div class="footer_btn">
+			<input type="hidden" name="dosubmit" value="1">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
+		</div>
 	</form>
 </div>
 </article>
@@ -60,9 +76,11 @@
 		    dataType: "json", 
             success: function (msg) {
 				if(msg.status == 1){
-					parent.location.reload();       
+					layer.msg(msg.message, {icon:1,time:1500}, function(){
+						parent.location.reload();     
+					});
 			    }else{
-					layer.msg(msg.message);
+					layer.msg(msg.message, {icon:2});
 				}
             }
         })		 

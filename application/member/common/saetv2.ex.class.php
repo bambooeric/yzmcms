@@ -1,9 +1,13 @@
 <?php
-/**
- * PHP SDK for weibo.com (using OAuth2)
- * 
- * @author 袁志蒙 www.yzmcms.com 
- */
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
 
 /**
  * If the class OAuthException has not been declared, extend the Exception class.
@@ -117,6 +121,8 @@ class SaeTOAuthV2 {
 	 */
 	public static $boundary = '';
 
+	public $postdata,$remote_ip,$http_header;
+
 	/**
 	 * Set API URLS
 	 */
@@ -179,7 +185,7 @@ class SaeTOAuthV2 {
 	 *  - 当$type为token时： array('refresh_token'=>...)
 	 * @return array
 	 */
-	function getAccessToken( $type = 'code', $keys ) {
+	function getAccessToken( $type = 'code', $keys = array() ) {
 		$params = array();
 		$params['client_id'] = $this->client_id;
 		$params['client_secret'] = $this->client_secret;
@@ -454,7 +460,7 @@ class SaeTOAuthV2 {
 
 		foreach ($params as $parameter => $value) {
 
-			if( in_array($parameter, array('pic', 'image')) && $value{0} == '@' ) {
+			if( in_array($parameter, array('pic', 'image')) && $value[0] == '@' ) {
 				$url = ltrim( $value, '@' );
 				$content = file_get_contents( $url );
 				$array = explode( '?', basename( $url ) );
@@ -489,6 +495,8 @@ class SaeTOAuthV2 {
  */
 class SaeTClientV2
 {
+
+	public $oauth;
 	/**
 	 * 构造函数
 	 * 
@@ -2992,7 +3000,7 @@ class SaeTClientV2
 	 * 对应API：{@link http://open.weibo.com/wiki/2/tags/destroy_batch tags/destroy_batch}
 	 * 
 	 * @access public
-	 * @param mixed $ids 必选参数，要删除的tag id，多个id用半角逗号分割，最多10个。或由多个tag id构成的数组。如：“553,554,555"或array(553, 554, 555)
+	 * @param mixed $ids 必选参数，要删除的tag id，多个id用半角逗号分隔，最多10个。或由多个tag id构成的数组。如：“553,554,555"或array(553, 554, 555)
 	 * @return array
 	 */
 	function delete_tags( $ids )

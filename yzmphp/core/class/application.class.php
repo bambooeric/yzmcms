@@ -31,8 +31,8 @@ class application {
 	private function init() {
 		$controller = $this->load_controller();
 		if (method_exists($controller, ROUTE_A)) {
-			if (preg_match('/^[_]/i', ROUTE_A)) {
-				self::halt('You are visiting the action is to protect the private action');
+			if (substr(ROUTE_A, 0, 1) == '_') {
+				self::halt('This action is inaccessible.');
 			} else {
 				call_user_func(array($controller, ROUTE_A));
 				if(APP_DEBUG){
@@ -110,7 +110,8 @@ class application {
 	public static function halt($msg, $code = 404) {
 		if(ob_get_length() !== false) @ob_end_clean();
 		if(!APP_DEBUG) send_http_status($code);
-		include(YP_PATH.'core'.DIRECTORY_SEPARATOR.'tpl'.DIRECTORY_SEPARATOR.'halt.tpl');
+		$tpl = is_file(YZMPHP_PATH.C('error_page'))&&!APP_DEBUG ? YZMPHP_PATH.C('error_page') : YP_PATH.'core'.DIRECTORY_SEPARATOR.'tpl'.DIRECTORY_SEPARATOR.'halt.tpl';
+		include($tpl);
 		exit();
 	}
 }

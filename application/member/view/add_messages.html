@@ -13,14 +13,20 @@
 					echo '<option value="'.$val['groupid'].'">'.$val['name'].'</option>';
 				}
 			   ?>			
-			 </select></li>
-			 <li><label><span class="c-red">*</span>主题：</label><input type="text" class="input" name="subject" value=""></li>
-			 <li><label><span class="c-red">*</span>内容：</label><span class="span_input"><textarea class="textarea" name="content" style="width:75%"></textarea></span></li>
-			 <li><input type="hidden" name="dosubmit" value="1">
-			 <input class="dosubmit w_120 btn-primary radius" type="submit" value="提交">
-			 <input class="btn w_120 btn-default radius" type="button" value="取消" onclick="yzmcms_close()">
+			 </select>
+			 </li>
+			 <li><label><span class="c-red">*</span>主题：</label>
+			 	<input type="text" class="input" name="subject" value="">
+			 </li>
+			 <li><label><span class="c-red">*</span>内容：</label>
+			 	<textarea class="textarea" name="content" style="width:72%"></textarea>
 			 </li>
 		</ul>
+		<div class="footer_btn">
+			<input type="hidden" name="dosubmit" value="1">
+			<input class="btn btn-primary radius" type="submit" value="提 交">
+			<input class="btn btn-default radius" type="button" value="取 消" onclick="yzmcms_close()">	
+		</div>
 	</form>
 </div>
 </article>
@@ -29,11 +35,11 @@
 <script type="text/javascript">
 	function dosub(obj){
 		 if(obj.subject.value==''){
-			 layer.msg('主题不能为空！');
+			 layer.msg('主题不能为空！', {icon:2});
 			 return false;
 		 }
 		 if(obj.content.value==''){
-			 layer.msg('内容不能为空！');
+			 layer.msg('内容不能为空！', {icon:2});
 			 return false;
 		 }
         $.ajax({
@@ -43,9 +49,11 @@
 		    dataType: "json", 
             success: function (msg) {
 				if(msg.status == 1){
-					parent.location.reload();       
+					layer.msg(msg.message, {icon:1, time:800}, function(){
+						parent.location.reload();
+					});
 			    }else{
-					layer.msg(msg.message);
+					layer.msg(msg.message, {icon:2});
 				}
             }
         })		 

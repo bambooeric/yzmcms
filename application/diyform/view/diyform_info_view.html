@@ -4,7 +4,7 @@
 <body>
 <article class="page-container">
 <div class="formdoby_normal"> 
-	<table class="table table-border table-bordered table-bg table-hover table-sort">
+	<table class="table table-border table-bg table-hover table-sort">
 		<thead>
 			<tr>
 				<th width="15%">字段名称</th>
@@ -24,6 +24,14 @@
 					}
 				}elseif($val['fieldtype'] == 'attachment'){
 					$va = '<a href="'.$data[$val['field']].'" target="_blank">'.$data[$val['field']].'</a>';
+				}elseif($val['fieldtype'] == 'attachments'){
+					$arr = string2array($data[$val['field']]);
+					$va = '';
+					foreach($arr as $v){
+						$va .= '<a href="'.$v['url'].'" download="'.$v['alt'].'.'.fileext($v['url']).'" title="'.$v['alt'].'"><img src="'.STATIC_URL.'images/ext/rar.png" height="15"> '.$v['alt'].'</a><br>';
+					}
+				}elseif($val['fieldtype'] == 'select' || $val['fieldtype'] == 'radio'){
+					$va = get_field_val($data[$val['field']], $val['field'], $modelid);
 				}else{
 					$va = $data[$val['field']];
 				}
@@ -34,7 +42,7 @@
 	</table>
 </div>
 
-<div style="position:fixed;bottom:20px;right:10px;z-index:99;"><input type="button" class="btn btn-primary radius w_120" onclick="yzmcms_close()" value="确定"></div>
+<div style="position:fixed;bottom:20px;right:10px;z-index:99;"><input type="button" class="btn btn-primary radius w_100" onclick="yzmcms_close()" value="确定"></div>
 </article>
 <?php include $this->admin_tpl('footer', 'admin');?>
 

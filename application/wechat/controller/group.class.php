@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('wechat_common', 'wechat', 0);
 
@@ -35,7 +45,7 @@ class group extends wechat_common{
 			$url = 'https://api.weixin.qq.com/cgi-bin/groups/create?access_token='.$this->get_access_token();
 			$str = '{"group":{"name":"'.$groupname.'"}}';
 
-			$json_arr = $this->https_request($url, $str);
+			$json_arr = https_request($url, $str);
 
 			if(isset($json_arr['errcode'])){
 				return_json(array('status'=>0,'message'=>'操作失败：'.$json_arr['errmsg']));
@@ -61,7 +71,7 @@ class group extends wechat_common{
 			$url = 'https://api.weixin.qq.com/cgi-bin/groups/update?access_token='.$this->get_access_token();
 
 			$str = '{"group":{"id":'.$groupid.',"name":"'.$groupname.'"}}';
-			$json_arr = $this->https_request($url, $str);
+			$json_arr = https_request($url, $str);
 
 			if($json_arr['errcode'] == 0){
 				D('wechat_group')->update(array('name' => $groupname), array('id' => $groupid), true);
@@ -88,7 +98,7 @@ class group extends wechat_common{
         $url = 'https://api.weixin.qq.com/cgi-bin/groups/delete?access_token='.$this->get_access_token();
         $str = '{"group":{"id":'.$groupid.'}}';
 
-        $json_arr = $this->https_request($url, $str);
+        $json_arr = https_request($url, $str);
 
 		if($json_arr['errcode'] == 0){
 			//查询该分组的人数
@@ -114,7 +124,7 @@ class group extends wechat_common{
 	public function select_group(){
 		
         $url = 'https://api.weixin.qq.com/cgi-bin/groups/get?access_token='.$this->get_access_token();
-        $json_arr = $this->https_request($url);
+        $json_arr = https_request($url);
 
 		if(isset($json_arr['errcode'])){
 			showmsg('查询分组失败！'.$json_arr['errmsg'], 'stop');

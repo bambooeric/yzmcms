@@ -59,7 +59,7 @@ class collection {
 		$end = str_replace(array("\r", "\n"), "", $end);		
 		
         $html = explode(trim($start), $html);
-		if(is_array($html)) $html = explode(trim($end), $html[1]);
+		if(is_array($html) && isset($html[1])) $html = explode(trim($end), $html[1]);
 		return trim($html[0]);
     }
 	
@@ -199,11 +199,11 @@ class collection {
 				$url = $baseurl.$url;
 			}
 		}
-
-		if(substr($url, 0, 4) != 'http') showmsg('链接地址仅允许HTTP和HTTPS协议！', 'stop');
+	
+		$arr = explode('://', $url);
+		if(!in_array($arr[0], array('http', 'https'))) showmsg('链接地址仅允许HTTP和HTTPS协议！', 'stop');
 		
 		return $url;
 	}
  
 }
-?>

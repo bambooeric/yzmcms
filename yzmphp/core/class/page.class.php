@@ -16,7 +16,7 @@ class page{
 	private $now_page; 	  		//当前页
 	private $parameter;   		//分页跳转的参数
 	private $url_rule;    		//URL规则
-	private $page_prefix; 		//URL分页前缀,默认为list
+	private $page_prefix; 		//URL分页前缀,默认为list_
 
 	
     /**
@@ -26,14 +26,14 @@ class page{
      * @param array $parameter  分页跳转的参数
      */
 	public function __construct($total_rows, $list_rows = 10, $parameter = array()){
-		$this->total_rows = $total_rows;	
-		$this->list_rows = $list_rows; 
+		$this->total_rows = intval($total_rows);	
+		$this->list_rows = $list_rows ? intval($list_rows) : $this->_get_page_size();
 		$this->total_page = ceil($this->total_rows/$this->list_rows); 
 		$this->now_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 		$this->now_page = $this->now_page>0 ? $this->now_page : 1;
         $this->parameter  = empty($parameter) ? $_GET : $parameter;	
         $this->url_rule = defined('LIST_URL') && LIST_URL ? true : false;
-        $this->page_prefix = defined('PAGE_PREFIX') ? PAGE_PREFIX : 'list';
+        $this->page_prefix = defined('PAGE_PREFIX') ? PAGE_PREFIX : 'list_';
         $this->url = $this->geturl();		
 	}
 
@@ -54,6 +54,10 @@ class page{
 	 * 生成链接URL
 	 */
     private function make_url($page){
+    	// 兼容PHP5.2写法，已不推荐
+    	// if($page == 1 && $this->url_rule && !strpos($this->url, '?')) return substr($this->url, 0, strpos($this->url, $this->page_prefix.'PAGE'));
+
+    	if($page == 1 && $this->url_rule && !strpos($this->url, '?')) return strstr($this->url, $this->page_prefix.'PAGE', true);
         return str_replace('PAGE', $page, $this->url);
     }
 
@@ -134,7 +138,22 @@ class page{
 	 */
 	public function limit(){
 		return $this->start_rows().','.$this->list_rows();
-	}	
+	}
+
+
+	/**
+	 * 设置每页展示条数
+	 */
+	public function page_size($sizes = array(10, 20, 30, 40, 50, 100)){
+		if(!is_array($sizes)) return '';
+		$string = '<select name="page_size" class="select" data-url="'.$this->url.'" onchange="yzm_page_size(this)">';
+		foreach ($sizes as $val) {
+			$select = $this->list_rows==$val ? 'selected' : '';
+			$string .= '<option value="'.$val.'" '.$select.'>'.$val.L('article_page').'</option>';
+		}
+		$string .= '</select>';
+		return $string;
+	}
 	
 	
 	/**
@@ -159,15 +178,37 @@ class page{
 			}
 		}
 		return $str;
+	}
+
+
+	/**
+	 * 跳转到指定页
+	 */
+	public function getjump(){
+		return '<span class="jumpbox">'.L('jump_to').'<input type="text" name="page" placeholder="'.L('page_number').'" onkeypress="return yzm_page_jump(this)" class="input-text jumppage" data-url="'.$this->url.'">'.L('page').'</span>';
 	}	
 	
 	
 	/**
 	 * 获取全部列表---首页上页[1][2][3][4][5]下页尾页
 	 */
-	public function getfull(){
+	public function getfull($show_jump = true){
 		if($this->total_rows == 0) return '';
-	    return ($this->gethome()).($this->getpre()).($this->getlist()).($this->getnext()).($this->getend());
+	    return $this->gethome().$this->getpre().$this->getlist().$this->getnext().$this->getend().($show_jump ? $this->getjump() : '');
+	}
+
+
+	/**
+	 * 获取每页展示条数
+	 */
+	private function _get_page_size(){
+		$page_size_c = intval(get_cookie('page_size'));
+		$page_size = isset($_GET['page_size']) ? intval($_GET['page_size']) : $page_size_c;
+
+		if($page_size>0 && $page_size!=$page_size_c) {
+			set_cookie('page_size', $page_size);
+		}
+		return $page_size>0 ? $page_size : 10;
 	}
 
 
@@ -180,24 +221,28 @@ class page{
 		if(defined('ADMIN_CREATE_HTML')){
 			if(!defined('TOTAL_PAGE')) define('TOTAL_PAGE', $this->total_page);
 			$catdir = getcache('update_html_catdir_'.$_SESSION['adminid']);
-			return SITE_URL.$catdir.'/'.$this->page_prefix.'_PAGE.html'; 
+			return SITE_URL.$catdir.'/'.$this->page_prefix.'PAGE.html'; 
 		}		
-		
+
 		$parameter = '';
-		$request_url = trim($_SERVER['REQUEST_URI'], '/');
+		$request_url = trim(str_replace(array(C('url_html_suffix'),$this->page_prefix.$this->now_page), '', $_SERVER['REQUEST_URI']), '/');
 
 		// 支持传入自定义参数  ?aa=1&bb=2
 		$pos = strpos($request_url, '?');
-		if($pos){
-			$parameter = substr($request_url, $pos);
-			$request_url = trim(substr($request_url, 0, $pos), '/');
+		if($pos !== false){
+			list($request_url, $parameter) = explode('?', $request_url);
+			if($parameter){
+				parse_str($parameter, $vars);  
+				$parameter = '?'.http_build_query($vars);
+			}
+			$request_url = trim($request_url, '/');
 		}
-		$pos = strpos($request_url, '/'.$this->page_prefix);
-		if($pos) $request_url = substr($request_url, 0, $pos);
+
+		if($request_url) $request_url .= '/';
 		if(SITE_PATH == '/'){
-			return SITE_URL.$request_url.'/'.$this->page_prefix.'_PAGE'.C('url_html_suffix').$parameter; 
+			return SITE_URL.$request_url.$this->page_prefix.'PAGE'.C('url_html_suffix').$parameter; 
 		}
-		return SERVER_PORT.HTTP_HOST.'/'.$request_url.'/'.$this->page_prefix.'_PAGE'.C('url_html_suffix').$parameter; 
+		return SERVER_PORT.HTTP_HOST.'/'.$request_url.$this->page_prefix.'PAGE'.C('url_html_suffix').$parameter; 
 	}
 
 }

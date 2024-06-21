@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8" />
 <title><?php echo $Title; ?> - <?php echo $Powered; ?></title>
-<link rel="stylesheet" href="./css/install.css?v=9.0" />
+<link rel="stylesheet" href="./css/install.css?v=yzmcms" />
 </head>
 <body>
 <div class="wrap">
@@ -12,17 +12,17 @@
   <section class="section">
     <div class="step">
       <ul>
-        <li class="current"><em>1</em>检测环境</li>
-        <li><em>2</em>创建数据</li>
-        <li><em>3</em>完成安装</li>
+          <li class="first current">检测环境</li>
+          <li>创建数据</li>
+          <li>完成安装</li>
       </ul>
     </div>
     <div class="server">
       <table width="100%">
         <tr>
-          <td class="td1">环境检测</td>
-          <td class="td1" width="25%">推荐配置</td>
-          <td class="td1" width="25%">当前状态</td>
+          <td class="td1" width="25%">环境检测</td>
+          <td class="td1" width="15%">推荐配置</td>
+          <td class="td1" width="35%">当前状态</td>
           <td class="td1" width="25%">最低要求</td>
         </tr>
         <tr>
@@ -33,7 +33,7 @@
         </tr>
         <tr>
           <td>PHP版本</td>
-          <td>>=5.6.x</td>
+          <td>>=7.0.x</td>
           <td><span class="correct_span">&radic;</span> <?php echo $phpv; ?></td>
           <td>5.2.0</td>
         </tr>
@@ -48,6 +48,12 @@
           <td>>2M</td>
           <td><?php echo $uploadSize; ?></td>
           <td>不限制</td>
+        </tr>
+        <tr>
+          <td>伪静态</td>
+          <td>开启</td>
+          <td><?php echo $rewrite_module; ?></td>
+          <td>开启</td>
         </tr>
         <tr>
           <td>SESSION</td>
@@ -70,8 +76,8 @@
       </table>
       <table width="100%">
         <tr>
-          <td class="td1">目录、文件权限检查</td>
-          <td class="td1" width="25%">写入</td>
+          <td class="td1" width="40%">目录、文件权限检查</td>
+          <td class="td1" width="35%">写入</td>
           <td class="td1" width="25%">读取</td>
         </tr>
 <?php

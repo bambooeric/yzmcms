@@ -2,14 +2,18 @@
 <title>查询群发状态 - YzmCMS内容管理系统</title>
 </head>
 <body>
-<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 微信管理 <span class="c-gray en">&gt;</span> 查询群发状态 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<nav class="breadcrumb"><i class="yzm-iconfont yzm-iconai-home"></i> 首页 <span class="c-gray en">&gt;</span> 微信管理 <span class="c-gray en">&gt;</span> 查询群发状态 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="yzm-iconfont yzm-iconshuaxin"></i></a></nav>
 <article class="page-container">
 <div class="formdoby_normal"> 
 	<form method="post" action="<?php echo U(ROUTE_A);?>" onsubmit="return dosub(this)">
 		<ul>
-			<li><label>任务ID：</label><input type="text" class="input" style="width:300px" name="msg_id" value=""></li>
-			<li><input class="dosubmit w_120 btn-primary radius" name="dosubmit" type="submit" value="查询">
-				<input class="btn w_120 btn-default radius h35" type="button" value="后退" onclick="window.history.go(-1)">
+			<li>
+				<label>任务ID：</label>
+				<input type="text" class="input" style="width:300px" name="msg_id" value="">
+			</li>
+			<li>
+				<input class="dosubmit w_100 btn-primary radius" name="dosubmit" type="submit" value="查询">
+				<input class="btn w_100 btn-default radius h35" type="button" value="后退" onclick="window.history.go(-1)">
 			</li>
 		</ul>
 	</form>

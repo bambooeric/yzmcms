@@ -2,7 +2,7 @@
 <title>修改采集节点 - YzmCMS内容管理系统</title>
 </head>
 <body>
-<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 模块管理 <span class="c-gray en">&gt;</span> 采集管理 <span class="c-gray en">&gt;</span> 修改采集节点 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<nav class="breadcrumb"><i class="yzm-iconfont yzm-iconai-home"></i> 首页 <span class="c-gray en">&gt;</span> 模块管理 <span class="c-gray en">&gt;</span> 采集管理 <span class="c-gray en">&gt;</span> 修改采集节点 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="yzm-iconfont yzm-iconshuaxin"></i></a></nav>
 <article class="page-container">
 <div class="formdoby_normal"> 
 	<form class="form form-horizontal" method="post" action="" onsubmit="return check()">
@@ -78,7 +78,7 @@
 					<tr>
 						<td width="120">过滤选项：</td> 
 						<td>
-<textarea name="title_html_rule" class="textarea" style="width:450px;"><?php echo $data['title_html_rule']?></textarea> <span class="c-red">使用“[|]”分割多个规则 </span><br/>
+<textarea name="title_html_rule" class="textarea" style="width:450px;"><?php echo $data['title_html_rule']?></textarea> <span class="c-red">使用“[|]”分隔多个规则 </span><br/>
 选择：					
 <label style="margin-right:10px"><input name="html_rule_1" onclick="html_role('html_rule_1','title_html_rule')" value="<p([^>]*)>(.*)</p>" type="checkbox"> &lt;p&gt;</label>
 <label style="margin-right:10px"><input name="html_rule_1" onclick="html_role('html_rule_1','title_html_rule')" value="<a([^>]*)>(.*)</a>" type="checkbox"> &lt;a&gt;</label>
@@ -111,7 +111,7 @@
 					<tr>
 						<td width="120">过滤选项：</td> 
 						<td>
-<textarea name="time_html_rule" class="textarea" style="width:450px;"><?php echo $data['time_html_rule']?></textarea> <span class="c-red">使用“[|]”分割多个规则 </span><br/>
+<textarea name="time_html_rule" class="textarea" style="width:450px;"><?php echo $data['time_html_rule']?></textarea> <span class="c-red">使用“[|]”分隔多个规则 </span><br/>
 选择：					
 <label style="margin-right:10px"><input name="html_rule_2" onclick="html_role('html_rule_2','time_html_rule')" value="<p([^>]*)>(.*)</p>" type="checkbox"> &lt;p&gt;</label>
 <label style="margin-right:10px"><input name="html_rule_2" onclick="html_role('html_rule_2','time_html_rule')" value="<a([^>]*)>(.*)</a>" type="checkbox"> &lt;a&gt;</label>
@@ -144,7 +144,7 @@
 					<tr>
 						<td width="120">过滤选项：</td> 
 						<td>
-<textarea name="content_html_rule" class="textarea" style="width:450px;"><?php echo $data['content_html_rule']?></textarea> <span class="c-red">使用“[|]”分割多个规则 </span><br/>
+<textarea name="content_html_rule" class="textarea" style="width:450px;"><?php echo $data['content_html_rule']?></textarea> <span class="c-red">使用“[|]”分隔多个规则 </span><br/>
 选择：					
 <label style="margin-right:10px"><input name="html_rule_3" onclick="html_role('html_rule_3','content_html_rule')" value="<p([^>]*)>(.*)</p>" type="checkbox"> &lt;p&gt;</label>
 <label style="margin-right:10px"><input name="html_rule_3" onclick="html_role('html_rule_3','content_html_rule')" value="<a([^>]*)>(.*)</a>" type="checkbox"> &lt;a&gt;</label>
@@ -189,8 +189,8 @@
 				</table>
 			</fieldset>
 			</div>
-		<input class="dosubmit w_120 btn-primary radius" name="dosubmit" type="submit" value="提交">
-		<input class="btn w_120 btn-default radius h35" type="button" value="后退" onclick="window.history.go(-1)">
+		<input class="dosubmit w_100 btn-primary radius" name="dosubmit" type="submit" value="提交">
+		<input class="btn w_100 btn-default radius h35" type="button" value="后退" onclick="window.history.go(-1)">
 		</div>
 	</form>
 </div>

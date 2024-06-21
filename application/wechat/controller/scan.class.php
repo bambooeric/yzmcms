@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('wechat_common', 'wechat', 0);
 yzm_base::load_sys_class('page','',0);
@@ -34,7 +44,7 @@ class scan extends wechat_common{
 				$json_str = '{"action_name": "QR_LIMIT_STR_SCENE", "action_info": {"scene": {"scene_str": "'.$scan.'"}}}';
 			}
 			
-			$json_arr = $this->https_request($url, $json_str);
+			$json_arr = https_request($url, $json_str);
 			if(!isset($json_arr['errcode'])){
 				$_POST['ticket'] = $json_arr['ticket'];
 				D('wechat_scan')->insert($_POST, true);
@@ -65,7 +75,7 @@ class scan extends wechat_common{
 				$json_str = '{"action_name": "QR_LIMIT_STR_SCENE", "action_info": {"scene": {"scene_str": "'.$scan.'"}}}';
 			}
 			
-			$json_arr = $this->https_request($url, $json_str);
+			$json_arr = https_request($url, $json_str);
 			if(!isset($json_arr['errcode'])){
 				$_POST['ticket'] = $json_arr['ticket'];
 				D('wechat_scan')->update($_POST, array('id' => $id), true);

@@ -12,7 +12,7 @@ yzm_base::load_sys_class('page','',0);
 
 class member_content extends common{
 	
-	function __construct() {
+	public function __construct() {
 		parent::__construct();
 	}
 
@@ -23,7 +23,6 @@ class member_content extends common{
 	public function init(){ 
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
-		
 		$this->_check_group_auth($groupid); 
 		yzm_base::load_sys_class('form','',0);
 
@@ -49,15 +48,15 @@ class member_content extends common{
 		$groupinfo = $this->_check_group_auth($groupid);	
 		
 		//会员中心可发布的字段
-		$fields = array('title','copyfrom','catid','thumb','description','content');
+		$fields = array('title','keywords','copyfrom','catid','thumb','description','content');
 	
-		if(isset($_POST['dosubmit'])) {
+		if(is_post()) {
 			
 			$catid = intval($_POST['catid']);
 			
 			//判断栏目是否禁止投稿
 			$data = D('category')->field('member_publish')->where(array('catid'=>$catid))->find();
-			if(!$data['member_publish']) showmsg(L('illegal_operation'), 'stop');
+			if(!$data['member_publish']) return_message(L('illegal_operation'), 0);
 			
 			//支持不同栏目自动实例化不同的model
 			$modelid = get_category($catid, 'modelid');
@@ -66,7 +65,9 @@ class member_content extends common{
 			$field_check = $this->_get_model_str($modelid, true);
 			foreach($field_check as $k => $v){
 				if($v['isrequired']){
-					if(empty($_POST[$k])) showmsg($v['errortips']);
+					if(!isset($_POST[$k])) return_message(L('lose_parameters'), 0);
+					$length = is_array($_POST[$k]) ? (empty($_POST[$k]) ? 0 : 1) : strlen($_POST[$k]);
+					if(!$length) return_message($v['errortips'], 0);
 				}
 			}
 
@@ -88,11 +89,10 @@ class member_content extends common{
 			//会员权限-投稿免审核
 			$is_adopt = strpos($groupinfo['authority'], '4') === false ? 0 : 1;
 			
-			$_POST['seo_title'] = $_POST['title'].'_'.get_config('site_name');
-			$_POST['system'] = '0';
+			$_POST['issystem'] = '0';
 			$_POST['status'] = $is_adopt;	
 			$_POST['listorder'] = '10';		//为内容置顶做准备
-			$_POST['description'] = empty($_POST['description']) ? str_cut(strip_tags($_POST['content']),200) : $_POST['description'];
+			$_POST['description'] = empty($_POST['description']) ? str_cut(strip_tags($_POST['content']),250) : $_POST['description'];
 			$_POST['inputtime'] = SYS_TIME;
 			$_POST['updatetime'] = SYS_TIME;
 			$_POST['catid'] = $catid;
@@ -104,9 +104,12 @@ class member_content extends common{
 			$content_tabname = D(get_model($modelid));
 			$id = $content_tabname->insert($_POST);
 			
-			//发布到用户内容列表中
-			$_POST['checkid'] = $modelid.'_'.$id;
-			D('member_content')->insert($_POST);
+			//写入全部模型表
+			$_POST['siteid'] = get_siteid();
+			$_POST['modelid'] = $modelid;
+			$_POST['id'] = $id;
+			$allid = D('all_content')->insert($_POST);
+			update_attachment($modelid, $id);
 
 			//如果设置了扣除积分
 			if(get_config('publish_point') < 0){
@@ -114,10 +117,10 @@ class member_content extends common{
 			}
 			
 			if(!$is_adopt){
-				showmsg('发布成功，等待管理员审核！', U('not_pass'));
+				return_message('发布成功，等待管理员审核！', 1, U('not_pass'));
 			}else{
-				$this->_adopt($content_tabname, $catid, $id);
-				showmsg('发布成功，内容已通过审核！', U('pass'));
+				$this->_adopt($content_tabname, $catid, $id, $allid);
+				return_message('发布成功，内容已通过审核！', 1, U('pass'));
 			}
 		}
 		
@@ -135,38 +138,36 @@ class member_content extends common{
 		yzm_base::load_sys_class('form','',0);
 		
 		//会员中心可发布的字段
-		$fields = array('title','copyfrom','catid','thumb','description','content');
-		
-		//可以根据catid获取model模型，来加载不同模板
-		$catid = isset($_GET['catid']) ? intval($_GET['catid']) : showmsg(L('lose_parameters'), 'stop');  
-		$id = isset($_GET['id']) ? intval($_GET['id']) : showmsg(L('lose_parameters'), 'stop');
+		$fields = array('title','keywords','copyfrom','catid','thumb','description','content');
 	
-		if(isset($_POST['dosubmit'])) {
+		if(is_post()) {
 			
+			$id = isset($_POST['id']) ? intval($_POST['id']) : return_message(L('lose_parameters'), 0);
 			$_POST['catid'] = intval($_POST['catid']);
 			
 			//判断栏目是否禁止投稿
 			$data = D('category')->field('member_publish')->where(array('catid'=>$_POST['catid']))->find();
-			if(!$data['member_publish']) showmsg('该栏目不允许在线投稿！', 'stop');
+			if(!$data['member_publish']) return_message('该栏目不允许在线投稿！', 0);
 			
 			//根据POST传回的参数再次判断一下modelid（必须）
 			$modelid = get_category($_POST['catid'], 'modelid');
 			if(!$modelid){
-				showmsg(L('operation_failure'), 'stop');
+				return_message(L('operation_failure'), 0);
 			}
 			$content_tabname = D(get_model($modelid));			
 			
-			$member_content = D('member_content');
-			$data = $member_content->field('username,status')->where(array('checkid' =>$modelid.'_'.$id))->find();
-			//只能编辑自己发布的内容
-			if(!$data || $data['username'] != $username){
-				showmsg(L('illegal_operation'), 'stop');
+			$all_content = D('all_content');
+			$data = $all_content->field('username,status,issystem')->where(array('modelid' => $modelid, 'id' => $id))->find();
+			if(!$data || $data['username'] != $username || $data['issystem']){
+				return_message(L('illegal_operation'), 0);
 			}
 			
 			$field_check = $this->_get_model_str($modelid, true);
 			foreach($field_check as $k => $v){
 				if($v['isrequired']){
-					if(empty($_POST[$k])) showmsg($v['errortips']);
+					if(!isset($_POST[$k])) return_message(L('lose_parameters'), 0);
+					$length = is_array($_POST[$k]) ? (empty($_POST[$k]) ? 0 : 1) : strlen($_POST[$k]);
+					if(!$length) return_message($v['errortips'], 0);
 				}
 			}
 			$fields = array_merge($fields, array_keys($field_check));
@@ -187,27 +188,34 @@ class member_content extends common{
 			//会员权限-投稿免审核
 			$is_adopt = strpos($groupinfo['authority'], '4') === false ? 0 : 1;
 
-			$_POST['seo_title'] = $_POST['title'].'_'.get_config('site_name');
-			$_POST['description'] = empty($_POST['description']) ? str_cut(strip_tags($_POST['content']),200) : $_POST['description'];
+			$_POST['description'] = empty($_POST['description']) ? str_cut(strip_tags($_POST['content']),250) : $_POST['description'];
 			$_POST['updatetime'] = SYS_TIME;
 			$_POST['status'] = $is_adopt;	
 			
 			if($content_tabname->update($_POST, array('id' => $id))){
-				$member_content->update($_POST, array('checkid' =>$modelid.'_'.$id));	//更新会员内容表
+				$all_content->update($_POST, array('modelid' => $modelid, 'id' => $id));
+				update_attachment($modelid, $id);
 				if(!$is_adopt){
-					showmsg('操作成功，等待管理员审核！', U('not_pass'));
+					return_message('操作成功，等待管理员审核！', 1, U('not_pass'));
 				}else{
-					showmsg('操作成功，内容已通过审核！', U('pass'));
+					return_message('操作成功，内容已通过审核！', 1, U('pass'));
 				}
 			}
 
 		}
+
+		//可以根据catid获取model模型，来加载不同模板
+		$catid = isset($_GET['catid']) ? intval($_GET['catid']) : showmsg(L('lose_parameters'), 'stop');  
+		$id = isset($_GET['id']) ? intval($_GET['id']) : showmsg(L('lose_parameters'), 'stop');
 		
 		$modelid = get_category($catid, 'modelid');
 		if(!$modelid)  showmsg(L('lose_parameters'), 'stop');  
 		$content_tabname = D(get_model($modelid));
 		
 		$data = $content_tabname->where(array('id' => $id))->find(); 
+		if(!$data || $data['username'] != $username || $data['issystem']){
+			showmsg(L('illegal_operation'), 'stop');
+		}		
 		
 		$fieldstr = $this->_get_model_str($modelid, false, $data);
 		$field_check = $this->_get_model_str($modelid, true);
@@ -216,48 +224,43 @@ class member_content extends common{
 
 	
 	
-	//已通过的稿件
+	/**
+	 * 已通过的稿件
+	 */
 	public function pass(){
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
 		
-		$member_content = D('member_content');
-		$total = $member_content->where(array('userid' =>$userid,'status' =>1))->total();
+		$all_content = D('all_content');
+		$total = $all_content->where(array('userid' =>$userid,'issystem' =>0,'status' =>1))->total();
 		$page = new page($total, 15);
-		$res = $member_content->field('checkid,catid,title,inputtime,updatetime')->where(array('userid' =>$userid,'status' =>1))->order('updatetime DESC')->limit($page->limit())->select();
-		$data = array();
-		foreach($res as $val) {
-			list($val['modelid'], $val['id']) = explode('_', $val['checkid']);
-			$val['url'] = U('index/index/show', array('catid'=>$val['catid'],'id'=>$val['id']));
-			$data[] = $val;
-		}
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$data = $all_content->field('modelid,catid,id,title,url,thumb,inputtime,updatetime')->where(array('userid' =>$userid,'issystem' =>0,'status' =>1))->order('updatetime DESC')->limit($page->limit())->select();
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('member', 'publish_through');
 	}
 
 
 
-	//未通过的稿件
+	/**
+	 * 未通过的稿件
+	 */
 	public function not_pass(){
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
 		
-		$member_content = D('member_content');
-		$total = $member_content->where(array('userid' =>$userid,'status' =>0))->total();
+		$all_content = D('all_content');
+		$total = $all_content->where(array('userid' =>$userid,'issystem' =>0,'status' =>0))->total();
 		$page = new page($total, 15);
-		$res = $member_content->field('checkid,catid,title,inputtime,updatetime,status')->where(array('userid' =>$userid,'status!=' =>1))->order('updatetime DESC')->limit($page->limit())->select();
-		$data = array();
-		foreach($res as $val) {
-			list($val['modelid'], $val['id']) = explode('_', $val['checkid']);
-			$data[] = $val;
-		}
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$data = $all_content->field('modelid,catid,id,title,url,thumb,inputtime,updatetime,status')->where(array('userid' =>$userid,'issystem' =>0,'status!=' =>1))->order('updatetime DESC')->limit($page->limit())->select();
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('member', 'publish_not_through');
 	}
 	
 	
 	
-	//删除未通过的稿件
+	/**
+	 * 删除未通过的稿件
+	 */
 	public function del(){
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
@@ -270,19 +273,68 @@ class member_content extends common{
 			showmsg(L('operation_failure'), 'stop');
 		}
 		$content_tabname = D(get_model($modelid));
-		$member_content = D('member_content');
-		$data = $member_content->field('username,status')->where(array('checkid' =>$modelid.'_'.$id))->find();
+		$all_content = D('all_content');
+		$data = $all_content->field('username,status,issystem')->where(array('modelid' => $modelid, 'id' => $id))->find();
 		//只能删除自己的 且 未通过审核的
-		if($data && $data['username'] == $username && $data['status'] != 1){
-			$member_content->delete(array('checkid' =>$modelid.'_'.$id));	//删除会员内容表
-			$content_tabname->delete(array('id' => $id));	 //删除model内容表
+		if($data && $data['username'] == $username && $data['status'] != 1 && $data['issystem'] == 0){
+			$all_content->delete(array('modelid' => $modelid, 'id' => $id));
+			$content_tabname->delete(array('id' => $id));
+			delete_attachment($modelid, $id);
 		}
-		showmsg(L('operation_success'));
+		showmsg(L('operation_success'), '', 1);
+	}
+
+
+	/**
+	 * 我的评论
+	 */
+	public function comment_list(){
+		$memberinfo = $this->memberinfo;
+		extract($memberinfo);
+		
+		$comment = D('comment');
+		$total = $comment->where(array('userid'=>$userid))->total();
+		$page = new page($total, 10);
+		$data = $comment->alias('a')->field('a.id,a.inputtime,a.ip,a.content,a.status,b.title,b.url')->join('yzmcms_comment_data b ON a.commentid=b.commentid')->where(array('userid' =>$userid))->order('id DESC')->limit($page->limit())->select();
+		foreach ($data as $key => $val) {
+			if(strpos($val['content'], 'original_comment') !==false){
+				$pos = strrpos($val['content'], '</a>');
+				$val['content'] = substr($val['content'], $pos+7);
+			}
+			$data[$key] = $val;
+		}
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
+		include template('member', 'comment_list');
 	}
 	
 	
 	
-	//收藏夹
+	/**
+	 * 删除评论
+	 */
+	public function comment_del(){
+		$memberinfo = $this->memberinfo;
+		extract($memberinfo);
+		
+		if(!isset($_POST['fx'])) showmsg('请选择要操作的内容！');
+		if(!is_array($_POST['fx'])) showmsg(L('illegal_operation'), 'stop');
+		$comment = D('comment');
+		foreach($_POST['fx'] as $v){
+			$comment_data = $comment ->field('userid,commentid')->where(array('id'=>$v))->find();
+			if(!$comment_data || $comment_data['userid']!=$userid) showmsg('该评论不存在，请返回检查！', 'stop');
+			$commentid = $comment_data['commentid'];
+			$comment->delete(array('id'=>$v));
+			$comment->query("UPDATE yzmcms_comment_data SET `total` = `total`-1 WHERE commentid='$commentid'");
+			$comment->delete(array('reply'=>$v));
+		}
+		showmsg(L('operation_success'), '', 1);
+	}
+	
+	
+	
+	/**
+	 * 收藏夹
+	 */
 	public function favorite(){
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
@@ -291,53 +343,59 @@ class member_content extends common{
 		$total = $favorite->where(array('userid' =>$userid))->total();
 		$page = new page($total, 15);
 		$data = $favorite->where(array('userid' =>$userid))->order('id DESC')->limit($page->limit())->select();
-		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull();
+		$pages = '<span class="pageinfo">共'.$total.'条记录</span>'.$page->getfull(false);
 		include template('member', 'favorite');
 	}
 	
 	
 	
-	//删除收藏夹
+	/**
+	 * 删除收藏夹
+	 */
 	public function favorite_del(){
 		$memberinfo = $this->memberinfo;
 		extract($memberinfo);
 		
-		if(!isset($_POST['fx'])) showmsg('您没有选择项目！');
+		if(!isset($_POST['fx'])) showmsg('请选择要操作的内容！');
 		if(!is_array($_POST['fx'])) showmsg(L('illegal_operation'), 'stop');
 		$favorite = D('favorite');
 		foreach($_POST['fx'] as $v){
 			$favorite->delete(array('id' => intval($v), 'userid' => $userid));
 		}
-		showmsg(L('operation_success'));
+		showmsg(L('operation_success'), '', 1);
 	}
 
 	
-	//检查会员组权限
+	/**
+	 * 检查会员组权限
+	 */
 	private function _check_group_auth($groupid, $is_add = true){
 		$memberinfo = $this->memberinfo;
 		$groupinfo = get_groupinfo($groupid);
 		if(strpos($groupinfo['authority'], '3') === false) 
-		showmsg('你没有权限投稿，请升级会员组！', 'stop'); 
+		return_message('你没有权限投稿，请升级会员组！', 0);
 
 		if($is_add){
 			//检查用户每日最大投稿量，且VIP用户不受“每日最大投稿量”限制
 			if(!$memberinfo['vip'] || $memberinfo['overduedate']<SYS_TIME){
-				$total = D('member_content')->where(array('userid'=>$this->userid, 'inputtime>'=> strtotime(date('Y-m-d'))))->total();
-				if($total >= $groupinfo['max_amount']) showmsg('当前会员每日最大投稿数为 '.$groupinfo['max_amount'].' 条，如需发布更多请升级会员组', 'stop'); 
+				$total = D('all_content')->where(array('userid'=>$this->userid, 'issystem'=>0, 'inputtime>'=> strtotime(date('Y-m-d'))))->total();
+				if($total >= $groupinfo['max_amount']) return_message('当前会员每日最大投稿数为 '.$groupinfo['max_amount'].' 条，如需发布更多请升级会员组！', 0); 
 			}			
 		}
 
 		//如果是投稿收费则检测积分是否够用
 		$publish_point = get_config('publish_point');
 		if(($publish_point < 0) && ($memberinfo['point'] < abs($publish_point))){
-			showmsg('本次交易将扣除点 '.abs($publish_point).' 积分，您的余额不足！', 'stop');
+			return_message('本次交易将扣除点 '.abs($publish_point).' 积分，您的余额不足！', 0);
 		}
 
 		return $groupinfo;
 	}
 	
 	
-	//获取不同模型获取HTML表单
+	/**
+	 * 获取不同模型获取HTML表单
+	 */
 	private function _get_model_str($modelid, $field = false, $data = array()) {
 		$modelinfo = getcache($modelid.'_model');
 		if($modelinfo === false){
@@ -348,15 +406,15 @@ class member_content extends common{
 		$fields = $fieldstr = array();
 		foreach($modelinfo as $val){
 			if($val['isadd'] == 0) continue;
-			$fieldtype = $val['fieldtype'];
+			$fieldtype = $val['fieldtype']=='decimal' ? 'input' : $val['fieldtype'];
 			if($data){
 				$val['defaultvalue'] = isset($data[$val['field']]) ? $data[$val['field']] : '';
 			}
 			$setting = $val['setting'] ? string2array($val['setting']) : 0;
-			$required = $val['isrequired'] ? '<span class="red">*</span>' : '';
+			$required = $val['isrequired'] ? '<span class="required">*</span>' : '';
 			$fieldstr[] = array(
-				'field' => $val['name'],
-				'form' => form::$fieldtype($val['field'], $val['defaultvalue'], $setting).$required
+				'field' => $required.$val['name'],
+				'form' => form::$fieldtype($val['field'], $val['defaultvalue'], $setting)
 			);
 			$fields[$val['field']] = $val['isrequired'] ? array('isrequired'=>1, 'fieldtype'=>$fieldtype, 'errortips'=>$val['errortips'] ? $val['errortips'] : $val['name'].'不能为空！') : array('isrequired'=>0);
 		}
@@ -407,9 +465,10 @@ class member_content extends common{
 	 * @param $catid 
 	 * @param $id 
 	 */		
-	private function _adopt($content_tabname, $catid, $id){
+	private function _adopt($content_tabname, $catid, $id, $allid){
 		$url = get_content_url($catid, $id);
 		$content_tabname->update(array('url' => $url), array('id' => $id));  
+		D('all_content')->update(array('url' => $url), array('allid' => $allid));  
 		
 		//投稿奖励积分和经验
 		$publish_point = get_config('publish_point');

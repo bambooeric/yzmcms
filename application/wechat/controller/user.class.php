@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('wechat_common', 'wechat', 0);
 yzm_base::load_sys_class('page','',0);
@@ -37,29 +47,37 @@ class user extends wechat_common{
 		if(isset($_GET['dosubmit'])){	
 			$status = isset($_GET["status"]) ? intval($_GET["status"]) : 99;
 			$groupid = isset($_GET["groupid"]) ? intval($_GET["groupid"]) : 99;
-			$searinfo = isset($_GET["searinfo"]) ? safe_replace($_GET["searinfo"]) : '';
+			$sex = isset($_GET["sex"]) ? intval($_GET["sex"]) : 99;
+			$searinfo = isset($_GET['searinfo']) ? safe_replace($_GET['searinfo']) : '';
 			$type = isset($_GET["type"]) ? $_GET["type"] : 1;
-			
-			if($searinfo != ''){
-				if($type == '1')
-					$where .= ' AND wechatid = \''.$searinfo.'\'';
-				elseif($type == '2')
-					$where .= ' AND scan = \''.$searinfo.'\'';
-				else
-					$where .= ' AND nickname LIKE \'%'.$searinfo.'%\'';
+
+			if($groupid != 99) {
+				$where .= ' AND groupid = '.$groupid;
 			}
-			
+
+			if($sex != 99) {
+				$where .= ' AND sex = '.$sex;
+			}
+
+			if($status != 99) {
+				$where .= ' AND subscribe = '.$status;
+			}
+
 			if(isset($_GET['start']) && isset($_GET['end']) && $_GET['start']) {
 				$where .= " AND `subscribe_time` >= '".strtotime($_GET['start'])."' AND `subscribe_time` <= '".strtotime($_GET['end'])."' ";
 			}
 			
-			if($status != 99) {
-				$where .= ' AND subscribe = '.$status;
+			if($searinfo){
+				if($type == '1')
+					$where .= ' AND wechatid = \''.$searinfo.'\'';
+				elseif($type == '2')
+					$where .= ' AND scan = \''.$searinfo.'\'';
+				elseif($type == '3')
+					$where .= ' AND nickname LIKE \'%'.$searinfo.'%\'';
+				else
+					$where .= ' AND remark LIKE \'%'.$searinfo.'%\'';
 			}
-			
-			if($groupid != 99) {
-				$where .= ' AND groupid = '.$groupid;
-			}			
+					
 		}
 		$_GET = array_map('htmlspecialchars', $_GET);
 		$total = $wechat_user->where($where)->total();
@@ -90,7 +108,7 @@ class user extends wechat_common{
 	public function synchronization(){
 		$next_openid = '';
         $url = 'https://api.weixin.qq.com/cgi-bin/user/get?access_token='.$this->get_access_token().'&next_openid='.$next_openid;
-        $json_arr = $this->https_request($url);
+        $json_arr = https_request($url);
 
 		if(isset($json_arr['errcode'])){
 			showmsg('获取关注者列表失败！'.$json_arr['errmsg'], 'stop');
@@ -126,14 +144,14 @@ class user extends wechat_common{
 			$str = '"'.join('","', $arr).'"';
 			$url = 'https://api.weixin.qq.com/cgi-bin/groups/members/batchupdate?access_token='.$this->get_access_token();
 			$str = '{"openid_list":['.$str.'],"to_groupid":'.$to_groupid.'}';
-			$json_arr = $this->https_request($url, $str);
+			$json_arr = https_request($url, $str);
 
 			if($json_arr['errcode'] == 0){
-				D('wechat_user')->update(array('groupid' => $to_groupid), 'wechatid IN ('.$_POST['ids'].')');
+				D('wechat_user')->wheres(array('wechatid'=>array('in', $_POST['ids'], 'intval')))->update(array('groupid' => $to_groupid));
 				$wechat_group = D('wechat_group');
 				$wechat_group->delete(array('1' => 1));
 				$url = 'https://api.weixin.qq.com/cgi-bin/groups/get?access_token='.$this->get_access_token();
-				$json_arr = $this->https_request($url);
+				$json_arr = https_request($url);
 				foreach($json_arr['groups'] as $val){
 					$wechat_group->insert($val, false, false);
 				}				
@@ -162,7 +180,7 @@ class user extends wechat_common{
 			$url = 'https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token='.$this->get_access_token();
 			$arr = array('openid' => $openid, 'remark' => $remark);
 			$json_str = $this->my_json_encode($arr);
-			$json_arr = $this->https_request($url, $json_str);
+			$json_arr = https_request($url, $json_str);
 
 			if($json_arr['errcode'] == 0){
 				D('wechat_user')->update(array('remark' => $remark), array('openid' => $openid));
@@ -190,7 +208,7 @@ class user extends wechat_common{
         $url = 'https://api.weixin.qq.com/cgi-bin/groups/getid?access_token='.$this->get_access_token();
 
         $str = '{"openid":"'.$openid.'"}';
-        $json_arr = $this->https_request($url, $str);
+        $json_arr = https_request($url, $str);
 
 		if(isset($json_arr['errcode'])){
 			showmsg('查询用户所在组失败！'.$json_arr['errmsg'], 'stop');
@@ -207,7 +225,7 @@ class user extends wechat_common{
 	private function get_userinfo($openid){
 		
         $url = 'https://api.weixin.qq.com/cgi-bin/user/info?access_token='.$this->get_access_token().'&openid='.$openid.'&lang=zh_CN';
-        $json_arr = $this->https_request($url);
+        $json_arr = https_request($url);
 
 		if(isset($json_arr['errcode'])){
 			showmsg('获取用户信息失败！'.$json_arr['errmsg'], 'stop');

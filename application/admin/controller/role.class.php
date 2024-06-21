@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 
@@ -18,13 +28,13 @@ class role extends common {
 	 */
 	public function delete() {
 		$roleid = intval($_GET['roleid']);
-		if(in_array($roleid, array(1, 2, 3))) showmsg('不能删除系统角色！', 'stop');
+		if(in_array($roleid, array(1, 2, 3))) return_json(array('status'=>0,'message'=>'不能删除系统角色！'));
 		if(D('admin')->where(array('roleid' => $roleid))->total() > 0){
-			showmsg('请先删除该角色下的管理员！', 'stop');
+			return_json(array('status'=>0,'message'=>'请先删除该角色下的管理员！'));
 		}else{
 			D('admin_role')->delete(array('roleid'=>$roleid));
 		}	
-		showmsg(L('operation_success'));
+		return_json(array('status'=>1,'message'=>L('operation_success')));
 	}
 	
 	
@@ -58,7 +68,8 @@ class role extends common {
 			$roleid = isset($_POST['roleid']) ? intval($_POST['roleid']) : 0;
 			unset($_POST["system"]);
 		
-			if($admin_role->update($_POST, array('roleid' => $roleid), true)){
+			if($admin_role->update($_POST, array('roleid'=>$roleid), true)){
+				D('admin')->update(array('rolename'=>$_POST['rolename']), array('roleid'=>$roleid), true);
 				return_json(array('status'=>1,'message'=>L('operation_success')));
 			}else{
 				return_json();
@@ -97,7 +108,7 @@ class role extends common {
 			}
 			
 			delcache('menu_string_'.$_POST['roleid']);
-			showmsg(L('operation_success'));
+			showmsg(L('operation_success'), U('init'), 1);
 			
 		}else{
 			$roleid = isset($_GET['roleid']) ? intval($_GET['roleid']) : 0;
@@ -106,15 +117,17 @@ class role extends common {
 			$tree = yzm_base::load_sys_class('tree');
 			$tree->icon = array('│ ','├─ ','└─ ');
 			$tree->nbsp = '&nbsp;&nbsp;&nbsp;';
-			$data = D('menu')->field('id,name,parentid,m,c,a')->order('listorder ASC,id DESC')->select();
+			$data = D('menu')->field('id,name,parentid,m,c,a')->order('listorder ASC,id ASC')->select();
 			$priv_data = D('admin_role_priv')->field('roleid,m,c,a')->where(array('roleid'=>$roleid))->select();
 			foreach($data as $k=>$v) {
+				$data[$k]['style'] = $v['parentid'] ? 'child' : 'top';
+				$data[$k]['add'] = $v['parentid'] ? '' : '<i class="yzm-iconfont parentid" action="2">&#xe653;</i> ';
 				$data[$k]['level'] = $this->get_level($v['id'],$data);
 				$data[$k]['checked'] = ($this->is_checked($v,$roleid,$priv_data))? ' checked' : '';
 			}		
 			
-			$str  = "<tr>
-						<td><label>\$spacer<input type='checkbox' name='menuid[]' value='\$id' level='\$level' \$checked onclick='javascript:checknode(this);'> \$name</label></td>
+			$str  = "<tr class='\$style'>
+						<td>\$add<label>\$spacer<input type='checkbox' name='menuid[]' value='\$id' level='\$level' \$checked onclick='javascript:checknode(this);'> \$name</label></td>
 					</tr>";
 			$tree->init($data);
 			$menus = $tree->get_tree(0, $str);

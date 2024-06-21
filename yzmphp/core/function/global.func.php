@@ -14,12 +14,13 @@
  * @param  string  $data  POST请求，数组不为空
  * @param  boolean $array 是否返回数组形式
  * @param  int     $timeout 设置超时时间（毫秒）
+ * @param  array   $header 请求头
  * @return array|string
  */
-function https_request($url, $data = '', $array = true, $timeout = 2000){
+function https_request($url, $data = '', $array = true, $timeout = 2000, $header = array()){
     $curl = curl_init($url);
-    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
     curl_setopt($curl, CURLOPT_NOSIGNAL, true); 
     curl_setopt($curl, CURLOPT_TIMEOUT_MS, $timeout); 
 
@@ -27,8 +28,17 @@ function https_request($url, $data = '', $array = true, $timeout = 2000){
         curl_setopt($curl, CURLOPT_POST, 1);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
     }
+
+	if($header){
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+	}
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
     $output = curl_exec($curl);
+    debug::addmsg(array('url'=>$url, 'data'=>$data), 2);
+	if($output === false) {
+		$curl_error = curl_error($curl);
+		return $array ? array('status'=>0, 'message'=>$curl_error) : $curl_error;
+	}
     curl_close($curl);
     return $array ? json_decode($output, true) : $output;
 }
@@ -40,6 +50,7 @@ function https_request($url, $data = '', $array = true, $timeout = 2000){
  * @param $length 截取长度
  * @param $dot	  截取之后用什么表示
  * @param $code	  编码格式，支持UTF8/GBK
+ * @return string
  */
 function str_cut($string, $length, $dot = '...', $code = 'utf-8') {
 	$strlen = strlen($string);
@@ -106,7 +117,7 @@ function remove_xss($string) {
 
     $parm1 = array('javascript', 'vbscript', 'expression', 'applet', 'meta', 'xml', 'blink', 'link', 'script', 'embed', 'object', 'iframe', 'frame', 'frameset', 'ilayer', 'layer', 'bgsound', 'title', 'base');
 
-    $parm2 = array('onabort', 'onactivate', 'onafterprint', 'onafterupdate', 'onbeforeactivate', 'onbeforecopy', 'onbeforecut', 'onbeforedeactivate', 'onbeforeeditfocus', 'onbeforepaste', 'onbeforeprint', 'onbeforeunload', 'onbeforeupdate', 'onblur', 'onbounce', 'oncellchange', 'onchange', 'onclick', 'oncontextmenu', 'oncontrolselect', 'oncopy', 'oncut', 'ondataavailable', 'ondatasetchanged', 'ondatasetcomplete', 'ondblclick', 'ondeactivate', 'ondrag', 'ondragend', 'ondragenter', 'ondragleave', 'ondragover', 'ondragstart', 'ondrop', 'onerror', 'onerrorupdate', 'onfilterchange', 'onfinish', 'onfocus', 'onfocusin', 'onfocusout', 'onhelp', 'onkeydown', 'onkeypress', 'onkeyup', 'onlayoutcomplete', 'onload', 'onlosecapture', 'onmousedown', 'onmouseenter', 'onmouseleave', 'onmousemove', 'onmouseout', 'onmouseover', 'onmouseup', 'onmousewheel', 'onmove', 'onmoveend', 'onmovestart', 'onpaste', 'onpropertychange', 'onreadystatechange', 'onreset', 'onresize', 'onresizeend', 'onresizestart', 'onrowenter', 'onrowexit', 'onrowsdelete', 'onrowsinserted', 'onscroll', 'onselect', 'onselectionchange', 'onselectstart', 'onstart', 'onstop', 'onsubmit', 'onunload', 'onpointerout');
+    $parm2 = array('onabort', 'onactivate', 'onafterprint', 'onafterupdate', 'onbeforeactivate', 'onbeforecopy', 'onbeforecut', 'onbeforedeactivate', 'onbeforeeditfocus', 'onbeforepaste', 'onbeforeprint', 'onbeforeunload', 'onbeforeupdate', 'onblur', 'onbounce', 'oncellchange', 'onchange', 'onclick', 'oncontextmenu', 'oncontrolselect', 'oncopy', 'oncut', 'ondataavailable', 'ondatasetchanged', 'ondatasetcomplete', 'ondblclick', 'ondeactivate', 'ondrag', 'ondragend', 'ondragenter', 'ondragleave', 'ondragover', 'ondragstart', 'ondrop', 'onerror', 'onerrorupdate', 'onfilterchange', 'onfinish', 'onfocus', 'onfocusin', 'onfocusout', 'onhelp', 'onkeydown', 'onkeypress', 'onkeyup', 'onlayoutcomplete', 'onload', 'onlosecapture', 'onmousedown', 'onmouseenter', 'onmouseleave', 'onmousemove', 'onmouseout', 'onmouseover', 'onmouseup', 'onmousewheel', 'onmove', 'onmoveend', 'onmovestart', 'onpaste', 'onpropertychange', 'onreadystatechange', 'onreset', 'onresize', 'onresizeend', 'onresizestart', 'onrowenter', 'onrowexit', 'onrowsdelete', 'onrowsinserted', 'onscroll', 'onselect', 'onselectionchange', 'onselectstart', 'onstart', 'onstop', 'onsubmit', 'onunload', 'onpointerout', 'onfullscreenchange', 'onfullscreenerror', 'onhashchange', 'onanimationend', 'onanimationiteration', 'onanimationstart', 'onmessage', 'onloadstart', 'ondurationchange', 'onloadedmetadata', 'onloadeddata', 'onprogress', 'oncanplay', 'oncanplaythrough', 'onended', 'oninput', 'oninvalid', 'onoffline', 'ononline', 'onopen', 'onpagehide', 'onpageshow', 'onpause', 'onplay', 'onplaying', 'onpopstate', 'onratechange', 'onsearch', 'onseeked', 'onseeking', 'onshow', 'onstalled', 'onstorage', 'onsuspend', 'ontimeupdate', 'ontoggle', 'ontouchcancel', 'ontouchend', 'ontouchmove', 'ontouchstart', 'ontransitionend', 'onvolumechange', 'onwaiting', 'onwheel', 'onbegin');
 
     $parm = array_merge($parm1, $parm2); 
 
@@ -122,7 +133,7 @@ function remove_xss($string) {
 			$pattern .= $parm[$i][$j]; 
 		}
 		$pattern .= '/i';
-		$string = preg_replace($pattern, ' ', $string); 
+		$string = preg_replace($pattern, 'xxx', $string); 
 	}
 	return $string;
 }	
@@ -135,6 +146,8 @@ function remove_xss($string) {
  * @return string
  */
 function safe_replace($string) {
+	if(!is_string($string)) return $string;
+	$string = trim($string);
 	$string = str_replace('%20','',$string);
 	$string = str_replace('%27','',$string);
 	$string = str_replace('%2527','',$string);
@@ -153,6 +166,7 @@ function safe_replace($string) {
 
 /**
  * 获取当前页面完整URL地址
+ * @return string
  */
 function get_url() {
 	$sys_protocal = is_ssl() ? 'https://' : 'http://';
@@ -165,7 +179,7 @@ function get_url() {
 
 /**
  * 获取请求ip
- * @return ip地址
+ * @return string
  */
 function getip(){
 	if(getenv('HTTP_CLIENT_IP') && strcasecmp(getenv('HTTP_CLIENT_IP'), 'unknown')) {
@@ -189,7 +203,7 @@ function getip(){
  */
 function get_address($ip, $is_array = false){
 	if($ip == '127.0.0.1') return '本地地址';
-	$content = @file_get_contents('https://www.yzmcms.com/api/ip/?ip='.$ip);
+	$content = @file_get_contents('http://api.yzmcms.com/api/ip/?ip='.$ip);
 	$arr = json_decode($content, true);
 	if(is_array($arr) && !isset($arr['error'])){
 		return $is_array ? $arr : $arr['country'].'-'.$arr['province'].'-'.$arr['city'];
@@ -199,10 +213,31 @@ function get_address($ip, $is_array = false){
 }
 
 
+/**
+ * 检查IP是否匹配
+ * @param  $ip_vague 要检查的IP或IP段，IP段(*)表示
+ * @param  $ip       被检查IP
+ * @return bool
+ */
+function check_ip_matching($ip_vague, $ip = ''){
+	empty($ip) && $ip = getip();
+	if(strpos($ip_vague,'*') === false){
+		return $ip_vague == $ip;
+	}
+	if(count(explode('.', $ip_vague)) != 4) return false;
+	$min_ip = str_replace('*', '0', $ip_vague);
+	$max_ip = str_replace('*', '255', $ip_vague);
+	$ip = ip2long($ip);
+	if($ip>=ip2long($min_ip) && $ip<=ip2long($max_ip)){  
+		return true; 
+	}
+	return false;
+}
+
+
 
 /**
 * 产生随机字符串
-*
 * @param    int        $length  输出长度
 * @param    string     $chars   可选的 ，默认为 0123456789
 * @return   string     字符串
@@ -229,7 +264,6 @@ function create_randomstr($lenth = 6) {
 
 /**
 * 创建订单号
-*
 * @return   string     字符串
 */
 function create_tradenum(){
@@ -263,13 +297,33 @@ function new_stripslashes($string) {
 
 /**
  * 返回经htmlspecialchars处理过的字符串或数组
- * @param $obj 需要处理的字符串或数组
+ * @param $string 需要处理的字符串或数组
+ * @param $filter 需要排除的字段，格式为数组
  * @return mixed
  */
-function new_html_special_chars($string) {
+function new_html_special_chars($string, $filter = array()) {
 	if(!is_array($string)) return htmlspecialchars($string,ENT_QUOTES,'utf-8');
-	foreach($string as $key => $val) $string[$key] = new_html_special_chars($val);
+	foreach($string as $key => $val){
+		$string[$key] = $filter&&in_array($key, $filter) ? $val : new_html_special_chars($val, $filter);
+	}
 	return $string;
+}
+
+
+/**
+ * 兼容PHP低版本的json_encode
+ * @param  array   $array
+ * @param  integer $options
+ * @param  integer $depth 
+ * @return string|false
+ */
+function new_json_encode($array, $options = 0, $depth = 0){
+	if(version_compare(PHP_VERSION,'5.4.0','<')) {
+	    $jsonstr = json_encode($array);
+	}else{
+	    $jsonstr = $depth ? json_encode($array, $options, $depth) : json_encode($array, $options);
+	}   
+	return $jsonstr;
 }
 
 
@@ -277,7 +331,7 @@ function new_html_special_chars($string) {
  * 转义 javascript 代码标记
  *
  * @param $str
- * @return mixed
+ * @return string
  */
 function trim_script($str) {
 	if(is_array($str)){
@@ -302,11 +356,11 @@ function trim_script($str) {
 */
 function string2array($data) {
 	$data = trim($data);
-	if($data == '') return array();
+	if(empty($data)) return array();
 	
-	if(strpos($data, '{\\')===0) $data = stripslashes($data);
-	$array=json_decode($data,true);
-	return $array;
+	if(version_compare(PHP_VERSION,'5.4.0','<')) $data = stripslashes($data);
+	$array = json_decode($data, true);
+	return is_array($array) ? $array : array();
 }
 
 
@@ -318,13 +372,13 @@ function string2array($data) {
 * @return	string	返回字符串，如果，data为空，则返回空
 */
 function array2string($data, $isformdata = 1) {
-	if($data == '' || empty($data)) return '';
+	if(empty($data)) return '';
 	
 	if($isformdata) $data = new_stripslashes($data);
-	if (version_compare(PHP_VERSION,'5.3.0','<')){
+	if(version_compare(PHP_VERSION,'5.4.0','<')){
 		return addslashes(json_encode($data));
 	}else{
-		return addslashes(json_encode($data,JSON_FORCE_OBJECT));
+		return json_encode($data, JSON_UNESCAPED_UNICODE|JSON_FORCE_OBJECT);
 	}
 }
 
@@ -361,8 +415,10 @@ function yzm_array_column($array, $column_key, $index_key = null){
 /**
  * 判断email格式是否正确
  * @param $email
+ * @return bool
  */
 function is_email($email) {
+	if(!is_string($email)) return false;
 	return strlen($email) > 6 && preg_match("/^[\w\-\.]+@[\w\-\.]+(\.\w+)+$/", $email);
 }
 
@@ -370,17 +426,18 @@ function is_email($email) {
 /**
  * 判断手机格式是否正确
  * @param $mobile
+ * @return bool
  */
 function is_mobile($mobile) {
-	return preg_match('/1[3456789]{1}\d{9}$/',$mobile);
+	return is_string($mobile) && preg_match('/1[3456789]{1}\d{9}$/',$mobile);
 }
 
 
 /**
  * 检测输入中是否含有错误字符
  *
- * @param char $string 要检查的字符串名称
- * @return TRUE or FALSE
+ * @param string $string 要检查的字符串名称
+ * @return bool
  */
 function is_badword($string) {
 	$badwords = array("\\",'&',' ',"'",'"','/','*',',','<','>',"\r","\t","\n","#");
@@ -396,14 +453,15 @@ function is_badword($string) {
 /**
  * 检查用户名是否符合规定
  *
- * @param STRING $username 要检查的用户名
- * @return 	TRUE or FALSE
+ * @param string $username 要检查的用户名
+ * @return 	boolean
  */
 function is_username($username) {
+	if(!is_string($username)) return false;
 	$strlen = strlen($username);
 	if(is_badword($username) || !preg_match("/^[a-zA-Z0-9_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]+$/", $username)){
 		return false;
-	} elseif ( 20 < $strlen || $strlen < 2 ) {
+	} elseif ( $strlen > 30 || $strlen < 3 ) {
 		return false;
 	}
 	
@@ -424,10 +482,10 @@ function is_username($username) {
  * 检查密码长度是否符合规定
  *
  * @param STRING $password
- * @return 	TRUE or FALSE
+ * @return 	boolean
  */
 function is_password($password) {
-	$strlen = strlen($password);
+	$strlen = is_string($password) ? strlen($password) : 0;
 	if($strlen >= 6 && $strlen <= 20) return true;
 	return false;
 }
@@ -437,7 +495,7 @@ function is_password($password) {
  * 取得文件扩展
  *
  * @param $filename 文件名
- * @return 扩展名
+ * @return string
  */
 function fileext($filename) {
 	return strtolower(trim(substr(strrchr($filename, '.'), 1, 10)));
@@ -445,9 +503,19 @@ function fileext($filename) {
 
 
 /**
- * IE浏览器判断
+ * 是否为图片格式
+ * @return bool
  */
+function is_img($ext) {
+	return in_array(strtolower($ext), array('png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico'));
+}
 
+
+
+/**
+ * IE浏览器判断
+ * @return bool
+ */
 function is_ie() {
 	$useragent = strtolower($_SERVER['HTTP_USER_AGENT']);
 	if((strpos($useragent, 'opera') !== false) || (strpos($useragent, 'konqueror') !== false)) return false;
@@ -480,8 +548,8 @@ function is_utf8($string) {
  * 文件下载
  * @param $filepath 文件路径
  * @param $filename 文件名称
+ * @return null
  */
-
 function file_down($filepath, $filename = '') {
 	if(!$filename) $filename = basename($filepath);
 	if(is_ie()) $filename = rawurlencode($filename);
@@ -536,37 +604,29 @@ function format_time($date = 0, $type = 1) {
 
 
 /**
-* 转换字节数为其他单位
-* @param	string	$size	字节大小
-* @return	string	返回大小
-*/
-function sizecount($size) {
-    $kb = 1024;
-    $mb = 1024 * $kb;
-    $gb = 1024 * $mb;
-    $tb = 1024 * $gb;
-    $db = 1024 * $tb;
-    if ($size < $kb) {
-        return $size . " B";
-    } else if ($size < $mb) {
-        return round($size / $kb, 2) . " KB";
-    } else if ($size < $gb) {
-        return round($size / $mb, 2) . " MB";
-    } else if ($size < $tb) {
-        return round($size / $gb, 2) . " GB";
-    } else if ($size < $db) {
-        return round($size / $tb, 2) . " TB";
-    } else {
-        return round($size / $db, 2) . " STB";
-    }
+ * 转换字节数为其他单位
+ * @param  int	$size	字节大小
+ * @param  int	$prec	小数点后的位数
+ * @return string	返回大小
+ */
+function sizecount($size, $prec = 2) {
+	$size = floatval($size);
+	$arr = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB');
+	$pos = 0;
+	while ($size >= 1024) {
+	    $size /= 1024;
+	    $pos++;
+	}
+	return round($size, $prec).' '.$arr[$pos];
 }
 
 
 /**
  * 对数据进行编码转换
- * @param array/string $data       数组
+ * @param array|string $data       数组或字符串
  * @param string $input     需要转换的编码
  * @param string $output    转换后的编码
+ * @return string|array
  */
 function array_iconv($data, $input = 'gbk', $output = 'utf-8') {
 	if (!is_array($data)) {
@@ -630,7 +690,7 @@ function string_auth($string, $operation = 'ENCODE', $key = '', $expiry = 0) {
 	}
 
 	if($operation == 'DECODE') {
-		if((substr($result, 0, 10) == 0 || substr($result, 0, 10) - SYS_TIME > 0) && substr($result, 10, 16) == substr(md5(substr($result, 26).$keyb), 0, 16)) {
+		if((substr($result, 0, 10) == 0 || intval(substr($result, 0, 10)) - SYS_TIME > 0) && substr($result, 10, 16) == substr(md5(substr($result, 26).$keyb), 0, 16)) {
 			return substr($result, 26);
 		} else {
 			return '';
@@ -647,8 +707,8 @@ function string_auth($string, $operation = 'ENCODE', $key = '', $expiry = 0) {
  * @return string
  */
 function match_img($content){
-    preg_match('/<[img|IMG].*?src=[\'|\"](.*?(?:[\.gif|\.jpg]))[\'|\"].*?[\/]?>/', $content, $match);
-    return !empty($match) ? $match[1] : ''; 
+    preg_match("/(src)=([\"|']?)([^ \"'>]+\.(gif|jpg|jpeg|bmp|png|webp))\\2/i", $content, $match);
+    return isset($match[3]) ? $match[3] : ''; 
 }
 
 
@@ -659,42 +719,43 @@ function match_img($content){
  * @return string $content 处理后的内容
  */
 function grab_image($content, $targeturl = ''){
-	preg_match_all('/<[img|IMG].*?src=[\'|\"](.*?(?:[\.gif|\.jpg]))[\'|\"].*?[\/]?>/', $content, $img_array); 
-    $img_array = isset($img_array[1]) ? array_unique($img_array[1]) : array();
+	preg_match_all("/(src)=([\"|']?)([^ \"'>]+\.(gif|jpg|jpeg|bmp|png|webp))\\2/i", $content, $img_array);
+	$img_array = isset($img_array[3]) ? array_unique($img_array[3]) : array();
 	
 	if($img_array) {
 		$path =  C('upload_file').'/'.date('Ym/d');
-		$urlpath = SITE_URL.$path;
+		$urlpath = SITE_PATH.$path;
 		$imgpath =  YZMPHP_PATH.$path;
 		if(!is_dir($imgpath)) @mkdir($imgpath, 0777, true);
 	}
 	
-	foreach($img_array as $key=>$value){
+	foreach($img_array as $value){
 		$val = $value;		
 		if(strpos($value, 'http') === false){
-			if(!$targeturl) return $content;
+			if(!$targeturl) continue;
 			$value = $targeturl.$value;
 		}	
 		if(strpos($value, '?')){ 
 			$value = explode('?', $value);
 			$value = $value[0];
-		}	
+		}
+		if(substr($value, 0, 4) != 'http'){
+			continue;
+		}
 		$ext = fileext($value);
-		if(!in_array($ext, array('jpg', 'png', 'gif', 'jpeg'))) continue;
-		$imgname = date("YmdHis").rand(1,9999).'.'.$ext;
+		if(!is_img($ext)) continue;
+		$imgname = date('YmdHis').rand(100,999).'.'.$ext;
 		$filename = $imgpath.'/'.$imgname;
 		$urlname = $urlpath.'/'.$imgname;
 		
 		ob_start();
-		readfile($value);
+		@readfile($value);
 		$data = ob_get_contents();
 		ob_end_clean();
-		file_put_contents($filename, $data);
+		$data && file_put_contents($filename, $data);
 	 
 		if(is_file($filename)){                         
 			$content = str_replace($val, $urlname, $content);
-		}else{
-			return $content;
 		}
 	}
 	return $content;        
@@ -712,11 +773,11 @@ function grab_image($content, $targeturl = ''){
  */
 function thumb($imgurl, $width = 300, $height = 200 ,$autocut = 0, $smallpic = 'nopic.jpg') {
 	global $image;
-	$upload_url = SITE_URL.C('upload_file').'/';
+	$upload_url = SITE_PATH.C('upload_file').'/';
 	$upload_path = YZMPHP_PATH.C('upload_file').'/';
 	if(empty($imgurl)) return STATIC_URL.'images/'.$smallpic;
 	if(!strpos($imgurl, '://')) $imgurl = SERVER_PORT.HTTP_HOST.$imgurl;
-	$imgurl_replace= str_replace($upload_url, '', $imgurl); 
+	$imgurl_replace= str_replace(SITE_URL.C('upload_file').'/', '', $imgurl); 
 	if(!extension_loaded('gd') || strpos($imgurl_replace, '://')) return $imgurl;
 	if(!is_file($upload_path.$imgurl_replace)) return STATIC_URL.'images/'.$smallpic;
 
@@ -744,43 +805,40 @@ function thumb($imgurl, $width = 300, $height = 200 ,$autocut = 0, $smallpic = '
 function watermark($source, $target = '') {
 	global $image_w;
 	if(empty($source)) return $source;
+	if(strpos($source, '://')) $source = str_replace(SERVER_PORT.HTTP_HOST, '', $source);
 	if(!extension_loaded('gd') || strpos($source, '://')) return $source;
-	if(!$target) $target = $source;
+	
 	if(!is_object($image_w)){
 		yzm_base::load_sys_class('image','','0');
 		$image_w = new image(1,1);
 	}
+
+	if(SITE_PATH == '/'){
+		$source = YZMPHP_PATH.$source;
+		$target = $target ? YZMPHP_PATH.$target : $source;
 		$image_w->watermark($source, $target);
-	return $target;
+		return str_replace(YZMPHP_PATH, '', $target);
+	}else{
+		$source = YZMPHP_PATH.str_replace(SITE_PATH, '', $source);
+		$target = $target ? YZMPHP_PATH.str_replace(SITE_PATH, '', $target) : $source;
+		$image_w->watermark($source, $target);
+		return SITE_PATH.str_replace(YZMPHP_PATH, '', $target);
+	}
 }
 
 
 /**
- * 生成sql语句，如果传入$in_cloumn 生成格式为 IN('a', 'b', 'c')
- * @param $data 条件数组或者字符串
- * @param $front 连接符
- * @param $in_column 字段名称
- * @return string
+ * 以httponly方式开启SESSION
+ * @return bool
  */
-function to_sqls($data, $front = ' AND ', $in_column = false) {
-	if($in_column && is_array($data)) {
-		$ids = '\''.implode('\',\'', $data).'\'';
-		$sql = "$in_column IN ($ids)";
-		return $sql;
-	} else {
-		if ($front == '') {
-			$front = ' AND ';
-		}
-		if(is_array($data)) {
-			$sql = '';
-			foreach ($data as $key => $val) {
-				$sql .= $sql ? " $front `$key` = '$val' " : " `$key` = '$val' ";
-			}
-			return $sql;
-		} else {
-			return $data;
-		}
-	}
+function new_session_start(){
+	// session_save_path(YZMPHP_PATH.'cache/sessions');
+	ini_set('session.cookie_httponly', true);
+	$session_name = session_name();
+	if (isset($_COOKIE[$session_name]) && !preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $_COOKIE[$session_name])) {
+        unset($_COOKIE[$session_name]);
+    } 
+	return session_start();
 }
 
 
@@ -789,12 +847,14 @@ function to_sqls($data, $front = ' AND ', $in_column = false) {
  * @param string $name     变量名
  * @param string $value    变量值
  * @param int $time    过期时间
+ * @param boolean $httponly  
  */
-function set_cookie($name, $value = '', $time = 0) {
+function set_cookie($name, $value = '', $time = 0, $httponly = false) {
 	$time = $time > 0 ? SYS_TIME + $time : $time;
 	$name = C('cookie_pre').$name;
 	$value = is_array($value) ? 'in_yzmphp'.string_auth(json_encode($value),'ENCODE',md5(YZMPHP_PATH.C('db_pwd'))) : string_auth($value,'ENCODE',md5(YZMPHP_PATH.C('db_pwd')));
-	setcookie($name, $value, $time, C('cookie_path'), C('cookie_domain'), C('cookie_secure'));
+	$httponly = $httponly ? $httponly : C('cookie_httponly');
+	setcookie($name, $value, $time, C('cookie_path'), C('cookie_domain'), C('cookie_secure'), $httponly);
 	$_COOKIE[$name] = $value;
 }
 
@@ -803,6 +863,7 @@ function set_cookie($name, $value = '', $time = 0) {
  * 获取 cookie
  * @param string $name     	  变量名，如果没有传参，则获取所有cookie
  * @param string $default     默认值，当值不存在时，获取该值
+ * @return string
  */
 function get_cookie($name = '', $default = '') {
 	if(!$name) return $_COOKIE;
@@ -822,29 +883,53 @@ function get_cookie($name = '', $default = '') {
 /**
  * 删除 cookie
  * @param string $name     变量名，如果没有传参，则删除所有cookie
+ * @return bool
  */
 function del_cookie($name = '') {	
 	if(!$name){
 		foreach($_COOKIE as $key => $val) { 
-			setcookie($key, '', SYS_TIME - 3600, C('cookie_path'), C('cookie_domain'), C('cookie_secure'));
+			setcookie($key, '', SYS_TIME - 3600, C('cookie_path'), C('cookie_domain'), C('cookie_secure'), C('cookie_httponly'));
 			unset($_COOKIE[$key]);
 		}		
 	}else{
 		$name = C('cookie_pre').$name;
 		if(!isset($_COOKIE[$name])) return true;
-		setcookie($name, '', SYS_TIME - 3600, C('cookie_path'), C('cookie_domain'), C('cookie_secure'));
+		setcookie($name, '', SYS_TIME - 3600, C('cookie_path'), C('cookie_domain'), C('cookie_secure'), C('cookie_httponly'));
 		unset($_COOKIE[$name]);
 	}
+	return true;
 }
 
 
 /**
- * 用于实例化一个model对象  如：M('article');
- * @param $classname	 model类名称 如 article.class.php，只传入article即可
+ * 新版获取配置参数
+ * @param string $key  要获取的配置荐，支持格式例如 database 或 database.host
+ * @param string $default  默认配置。当获取配置项目失败时该值发生作用。
+ * @return mixed
+ */
+function config($key = '', $default = '') {
+    $k = explode('.', $key);
+    static $cfg = array(); 
+    if (!isset($cfg[$k[0]])) {
+        $path = YZMPHP_PATH.'common'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.$k[0].'.php';
+        if (is_file($path)) { 
+            $cfg[$k[0]] = include $path;
+        }else{
+            return $default;
+        }
+    }
+    return count($k)==1 ? $cfg[$k[0]] : (isset($cfg[$k[0]][$k[1]]) ? $cfg[$k[0]][$k[1]] : $default);
+}
+
+
+/**
+ * 用于实例化一个model对象
+ * @param string $classname 模型名
+ * @param string $m 模块
  * @return object
  */	
-function M($classname){
-	return yzm_base::load_model($classname);
+function M($classname, $m = ''){
+	return yzm_base::load_model($classname, $m);
 }
 
 
@@ -867,12 +952,13 @@ function D($tabname){
 
 /**
  * URL组装 支持不同URL模式
- * @param string $url URL表达式，格式：'[模块/控制器/操作]'
+ * @param string $url URL表达式，格式：'[模块/控制器/方法]'
  * @param string|array $vars 传入的参数，支持字符串和数组
- * @param boolean $domain 是否显示域名
+ * @param boolean $domain 是否显示域名，默认根据URL模式自动展示
+ * @param string|boolean $suffix 伪静态后缀，默认为true表示获取配置值
  * @return string
  */
-function U($url='', $vars='', $domain=false) {	
+function U($url='', $vars='', $domain=null, $suffix=true) {	
 	$url = trim($url, '/');
 	$arr = explode('/', $url);
 	$num = count($arr);
@@ -894,6 +980,7 @@ function U($url='', $vars='', $domain=false) {
 		}
 	}else{
 		if(URL_MODEL == 1) $string .= 'index.php?s=';
+		if(URL_MODEL == 4) $string .= 'index.php/';
 		
 		if($num == 3){
 			$string .= $url;
@@ -906,15 +993,14 @@ function U($url='', $vars='', $domain=false) {
 		if($vars){
 			if(!is_array($vars)) parse_str($vars, $vars);			
             foreach ($vars as $var => $val){
-                if(trim($val) !== '') $string .= '/'.urlencode($var).'/'.urlencode($val);
+                if(!is_array($val) && trim($val) !== '') $string .= '/'.urlencode($var).'/'.urlencode($val);
             } 
 		}
-        $string .= C('url_html_suffix');		
+        $string .= $suffix === true ? C('url_html_suffix') : $suffix;		
 	}
 
-	if(URL_MODEL == 3 || $domain){
-		$string = SERVER_PORT.HTTP_HOST.$string;
-	}	
+	$string = $domain===null&&URL_MODEL==3 ? SERVER_PORT.HTTP_HOST.$string : ($domain ? SERVER_PORT.HTTP_HOST.$string : $string);
+	
 	return $string;
 }
 
@@ -981,28 +1067,22 @@ function L($language = '', $module = ''){
 
 /**
  * 打印各种类型的数据，调试程序时使用。
- * @param mixed $var 变量
- * @param boolean $echo 是否输出 默认为true 如果为false 则返回输出字符串
- * @return void or string
+ * @param mixed $var 变量，支持传入多个
+ * @return null
  */
-function P($var, $echo=true){
-	ob_start();
-    var_dump($var);
-    $output = ob_get_clean();
-	if(!extension_loaded('xdebug')){
-		$output = preg_replace('/\]\=\>\n(\s+)/m', '] => ', $output);
-		$output = '<pre>' .  htmlspecialchars($output, ENT_QUOTES) . '</pre>';
-    }
-	if($echo){
-        echo $output;
-        return null;
-    }else
-        return $output;
+function P($var){
+	foreach(func_get_args() as $value){
+		echo '<pre style="background:#18171B;color:#EBEBEB;border-radius:3px;padding:5px 8px;margin:8px 0;font:12px Menlo, Monaco, Consolas, monospace;word-wrap:break-word;white-space:pre-wrap">';
+		var_dump($value);
+		echo '</pre>';
+	}
+	return null;
 }
 
 
 /**
  * 用于临时屏蔽debug信息
+ * @return null
  */	
 function debug(){
 	defined('DEBUG_HIDDEN') or define('DEBUG_HIDDEN', true);
@@ -1011,6 +1091,7 @@ function debug(){
 
 /**
  * 用于设置模块的主题
+ * @return null
  */	
 function set_module_theme($theme = 'default'){
 	defined('MODULE_THEME') or define('MODULE_THEME', $theme);
@@ -1058,24 +1139,26 @@ function delcache($name, $flush = false) {
 
 /**
  * 模板调用
- *
- * @param $module
- * @param $template
- * @return unknown_type
+ * @param  string $module   模块名
+ * @param  string $template 模板名称
+ * @param  string $theme    强制模板风格
+ * @return void           
  */
-function template($module = '', $template = 'index'){
+function template($module = '', $template = 'index', $theme = ''){
 	if(!$module) $module = 'index';
 	$template_c = YZMPHP_PATH.'cache'.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR;
-	$template_path = !defined('MODULE_THEME') ? APP_PATH.$module.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.C('site_theme').DIRECTORY_SEPARATOR : APP_PATH.$module.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.MODULE_THEME.DIRECTORY_SEPARATOR;;
+	$theme = !$theme ? (!defined('MODULE_THEME') ? C('site_theme') : MODULE_THEME) : $theme;
+	$template_path = APP_PATH.$module.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.$theme.DIRECTORY_SEPARATOR;
     $filename = $template.'.html';
 	$tplfile = $template_path.$filename;   
 	if(!is_file($tplfile)) {
-		showmsg(str_replace(YZMPHP_PATH, '', $tplfile).L('template_does_not_exist'),'stop');			                      
+		$template = APP_DEBUG ? str_replace(YZMPHP_PATH, '', $tplfile) : basename($tplfile);
+		showmsg($template.L('template_does_not_exist'), 'stop');			                      
 	}	
 	if(!is_dir(YZMPHP_PATH.'cache'.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR)){
 		@mkdir(YZMPHP_PATH.'cache'.DIRECTORY_SEPARATOR.$module.DIRECTORY_SEPARATOR, 0777, true);
 	}
-	$template = md5($template_path.$template);	
+	$template = basename($template).'_'.md5($template_path.$template);	
 	$template_c = $template_c.$template.'.tpl.php'; 		
 	if(!is_file($template_c) || filemtime($template_c) < filemtime($tplfile)) {
 		$yzm_tpl = yzm_base::load_sys_class('yzm_tpl');
@@ -1083,6 +1166,32 @@ function template($module = '', $template = 'index'){
 		file_put_contents($template_c, $compile);
 	}
 	return $template_c;
+}
+
+
+/**
+ * 下发队列任务
+ * @param  string $job    队列任务类名称
+ * @param  array  $params 传入的参数
+ * @param  string $queue  队列名称
+ * @return string|false   任务id
+ */
+function dispatch($job, $params = array(), $queue = ''){
+    $res = yzm_base::load_job($job, 0);
+    if(!$res) return $res;
+
+    $object = new $job($params);
+    yzm_base::load_sys_class('queue_factory','',0);
+
+    $data = array(
+        'uuid' => md5(create_randomstr()),
+        'job' => $job,
+        'object' => serialize($object),
+        'attempts' => 0,
+        'create_time' => SYS_TIME
+    );
+    queue_factory::get_instance()->lpush($queue ? $queue : trim(C('queue_name')), $data);
+    return $data['uuid'];
 }
 
 
@@ -1101,6 +1210,21 @@ function showmsg($msg, $gourl = '', $limittime = 3){
 		debug::message();
 	}
 	exit;
+}
+
+
+/**
+ * 根据请求方式自动返回信息
+ * @param   $message 
+ * @param   $status  
+ * @param   $url  
+ * @return  void           
+ */
+function return_message($message, $status = 1, $url = ''){
+	$data = array('status'=>$status, 'message'=>$message);
+	if($url) $data['url'] = $url;
+	is_ajax() && return_json($data);
+	showmsg($message, $url ? $url : ($status ? '' : 'stop'));
 }
 
 
@@ -1171,6 +1295,7 @@ function send_http_status($code){
 /**
  * 生成验证key
  * @param $prefix   前缀
+ * @return string
  */
 function make_auth_key($prefix) {
 	return md5($prefix.YZMPHP_PATH.C('auth_key'));
@@ -1178,20 +1303,65 @@ function make_auth_key($prefix) {
 
 
 /**
+ * 返回json数组，默认提示 “数据未修改！” 
+ * @param $arr
+ * @param $show_debug
+ * @return string
+ */
+function return_json($arr = array(), $show_debug = false){
+	header("X-Powered-By: YZMPHP/YzmCMS.");
+    header('Content-Type:application/json; charset=utf-8');
+    if(!$arr) $arr = array('status'=>0,'message'=>L('data_not_modified'));
+	if(APP_DEBUG || $show_debug) $arr = array_merge($arr, debug::get_debug());
+    exit(new_json_encode($arr, JSON_UNESCAPED_UNICODE));
+}
+
+
+/**
  * 记录日志
  * @param $message 日志信息
  * @param $filename 文件名称
+ * @param $ext 文件后缀
  * @param $path 日志路径
  * @return bool
  */
-function write_log($message, $filename = '', $path = '') {
-	$message = is_array($message) ? json_encode($message) : $message;
+function write_log($message, $filename = '', $ext = '.log', $path = '') {
+	$message = is_array($message) ? new_json_encode($message, JSON_UNESCAPED_UNICODE) : $message;
 	$message = date('H:i:s').' '.$message."\r\n";
-	if(!$path) $path = YZMPHP_PATH.'cache';
+	if(!$path) $path = YZMPHP_PATH.'cache/syslog';
+	if(!is_dir($path)) @mkdir($path, 0777, true);
 	
-	if(!$filename) $filename = date('Ymd').'.log';
+	if(!$filename) $filename = date('Ymd').$ext;
 	
 	return error_log($message, 3, $path.DIRECTORY_SEPARATOR.$filename);
+}
+
+
+/**
+ * 记录错误日志
+ * @param $err_arr 错误信息
+ * @param $path 日志路径
+ * @return bool
+ */
+function write_error_log($err_arr, $path = '') {
+	if(!C('error_log_save') || defined('CLOSE_WRITE_LOG')) return false;
+	$err_arr = is_array($err_arr) ? $err_arr : array($err_arr);
+	$message[] = date('Y-m-d H:i:s');
+	$message[] = get_url();
+	$message[] = getip();
+	if(isset($_POST) && !empty($_POST)) $message[] = new_json_encode($_POST, JSON_UNESCAPED_UNICODE);
+	$message = array_merge($message, $err_arr);
+	$message = join(' | ', $message)."\r\n";
+	if(!$path) $path = YZMPHP_PATH.'cache';
+	if(!is_dir($path)) @mkdir($path, 0777, true);
+	$file = $path.DIRECTORY_SEPARATOR.'error_log.php';
+	if(is_file($file) && filesize($file)>20971520){
+		@rename($file, $path.DIRECTORY_SEPARATOR.'error_log'.date('YmdHis').rand(100,999).'.php') ;
+	}
+	if(!is_file($file)){
+		error_log("<?php exit;?>\r\n", 3, $file);
+	}
+	return error_log($message, 3, $file);
 }
 
 
@@ -1245,12 +1415,12 @@ function input($key = '', $default = '', $function = ''){
 	if ($method == 'get') {
 		return empty($key) ? $_GET : (isset($_GET[$key]) ? ($function ? $function($_GET[$key]) : $_GET[$key]) : $default);
 	} elseif ($method == 'post') {
-		$_POST = $_POST ? $_POST : json_decode(file_get_contents('php://input'), true);
+		$_POST = $_POST ? $_POST : (file_get_contents('php://input') ? json_decode(file_get_contents('php://input'), true) : array());
 		return empty($key) ? $_POST : (isset($_POST[$key]) ? ($function ? $function($_POST[$key]) : $_POST[$key]) : $default);
 	} elseif ($method == 'request') {
 		return empty($key) ? $_REQUEST : (isset($_REQUEST[$key]) ? ($function ? $function($_REQUEST[$key]) : $_REQUEST[$key]) : $default);
 	} elseif ($method == 'param') {
-		$param = array_merge($_GET, $_POST, $_REQUEST);
+		$param = array_merge($_GET, is_array($_POST)?$_POST:array(), $_REQUEST);
 		return empty($key) ? $param : (isset($param[$key]) ? ($function ? $function($param[$key]) : $param[$key]) : $default);
 	} else {
 		return false;
@@ -1260,12 +1430,18 @@ function input($key = '', $default = '', $function = ''){
 
 /**
  * 判断是否SSL协议
- * @return boolean
+ * @return bool
  */
 function is_ssl() {
     if(isset($_SERVER['HTTPS']) && ('1' == $_SERVER['HTTPS'] || 'on' == strtolower($_SERVER['HTTPS']))){
         return true;
-    }elseif(isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'] )) {
+    }elseif(isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'])) {
+        return true;
+    }elseif(isset($_SERVER['REQUEST_SCHEME']) && ('https' == strtolower($_SERVER['REQUEST_SCHEME']))) {
+        return true;
+    }elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && ('https' == strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']))) {
+        return true;
+    }elseif(isset($_SERVER['HTTP_X_FORWARDED_SCHEME']) && ('https' == strtolower($_SERVER['HTTP_X_FORWARDED_SCHEME']))) {
         return true;
     }
     return false;
@@ -1296,7 +1472,16 @@ function is_get(){
  */
 function is_put(){
 	return 'PUT' == $_SERVER['REQUEST_METHOD'];
-}	
+}
+
+
+/**
+ * 判断是否为AJAX请求
+ * @return bool
+ */
+function is_ajax(){
+	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])=='xmlhttprequest' ? true : false;
+}
 
 
 /**
@@ -1305,18 +1490,19 @@ function is_put(){
  * @return string
  */
 function creat_token($isinput = true){
-	$_SESSION['token'] = create_randomstr(8);
-	return $isinput ? '<input type="hidden" name="token" value="'.$_SESSION['token'].'">' : $_SESSION['token'];
+	if(!isset($_SESSION['yzm_csrf_token'])) $_SESSION['yzm_csrf_token'] = create_randomstr(8);
+	return $isinput ? '<input type="hidden" name="token" value="'.$_SESSION['yzm_csrf_token'].'">' : $_SESSION['yzm_csrf_token'];
 }
 
 
 /**
  * 验证TOKEN，确保已经开启SESSION
  * @param string $token 
+ * @param bool $delete
  * @return bool
  */
-function check_token($token){
-	if(!$token || !isset($_SESSION['token']) || $token!=$_SESSION['token']) return false;
-	unset($_SESSION['token']);
+function check_token($token, $delete=false){
+	if(!$token || !isset($_SESSION['yzm_csrf_token']) || $token!=$_SESSION['yzm_csrf_token']) return false;
+	if($delete) unset($_SESSION['yzm_csrf_token']);
 	return true;
 }

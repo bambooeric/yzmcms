@@ -1,5 +1,5 @@
 /**
- * YZMCMS内容管理系统
+ * YZMCMS内容管理系统  (yzm cms轻量级开源CMS)
  * @author           袁志蒙  
  * @license          http://www.yzmcms.com
  */
@@ -41,6 +41,7 @@ $(function(){
 
 function toreply(obj){
     if($("#rep_" + obj).css("display") == "none"){
+        $("#rep_" + obj + " .yzm-comment-reply-code img").attr('src', $("#rep_" + obj + " .yzm-comment-reply-code img").attr("src") + "?");
         $("#rep_" + obj).css("display", "block");
     }else{
         $("#rep_" + obj).css("display", "none");
@@ -48,19 +49,49 @@ function toreply(obj){
 }
 
 function check_comm(obj){
-    var content = obj.content.value;
-	if(content === ''){
-	    alert('你不打算说点什么吗？');
+	if(obj.content.value === ''){
+	    layer.msg('你不打算说点什么吗？', {icon:2});
 		return false;
 	}
-	return true;
+	$.ajax({
+		type: "POST",
+		url: $(obj).attr("action"), 
+		data: $(obj).serialize(),
+		dataType: "json", 
+		success: function (msg) {
+			if(msg.status == 1){
+				layer.msg(msg.message, {icon:1}, function(){
+					location.reload();
+				});
+			}else{
+				$(obj).find('img').attr('src',$(obj).find('img').attr('src') + '?' + Math.random());
+				layer.msg(msg.message, {icon:2});
+			}
+		}
+	})		 
+	return false;
 }
 
 function check_rep(obj){
-    var content = obj.content.value;
-	if(content === ''){
-	    alert('你不打算说点什么吗？');
+	if(obj.content.value === ''){
+	    layer.msg('你不打算说点什么吗？', {icon:2});
 		return false;
 	}
-	return true;
+	$.ajax({
+		type: "POST",
+		url: $(obj).attr("action"), 
+		data: $(obj).serialize(),
+		dataType: "json", 
+		success: function (msg) {
+			if(msg.status == 1){
+				layer.msg(msg.message, {icon:1}, function(){
+					location.reload();
+				});
+			}else{
+				$(obj).find('img').attr('src',$(obj).find('img').attr('src') + '?' + Math.random());
+				layer.msg(msg.message, {icon:2});
+			}
+		}
+	})		 
+	return false;
 }

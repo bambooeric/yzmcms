@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('wechat_common', 'wechat', 0);
 yzm_base::load_sys_class('page','',0);
@@ -91,7 +101,7 @@ class mass extends wechat_common{
 				$url = 'https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token='.$this->get_access_token();  //按openid列表群发
 			}
 			
-			$json_arr = $this->https_request($url, $jsondata);
+			$json_arr = https_request($url, $jsondata);
 
 			if($json_arr['errcode'] == 0){
 
@@ -102,7 +112,7 @@ class mass extends wechat_common{
 				$_POST['status'] = 1;
 				$_POST['masstime'] = SYS_TIME;
 				
-				D('wechat_mass')->insert($_POST);
+				D('wechat_mass')->insert($_POST, true);
 				showmsg(L('operation_success'), U('init'), 1);
 			}else{
 				showmsg('操作失败！errcode：'.$json_arr['errcode'].'，errmsg：'.$json_arr['errmsg'], 'stop');
@@ -127,7 +137,7 @@ class mass extends wechat_common{
 			$url = 'https://api.weixin.qq.com/cgi-bin/message/mass/get?access_token='.$this->get_access_token();  
 			$data = '{"msg_id": "'.$msg_id.'"}';
 			
-			$json_arr = $this->https_request($url, $data);
+			$json_arr = https_request($url, $data);
 			if(!isset($json_arr['errcode'])){
 
 				showmsg('msg_id：'.$json_arr['msg_id'].'，status：'.$json_arr['msg_status'], 'stop');
@@ -149,7 +159,7 @@ class mass extends wechat_common{
 		$url = 'https://api.weixin.qq.com/cgi-bin/message/mass/delete?access_token='.$this->get_access_token();  
 		$data = '{"msg_id":'.$msg_id.'}';
 		
-		$json_arr = $this->https_request($url, $data);
+		$json_arr = https_request($url, $data);
 		if($json_arr['errcode'] == 0){
 			D('wechat_mass')->delete(array('id' => $id));
 			showmsg('删除成功！', U('init'));
@@ -191,26 +201,32 @@ class mass extends wechat_common{
 	 */	
 	public function select_user(){
 		$groupid = isset($_GET["groupid"]) ? intval($_GET["groupid"]) : 99;
+		$scan = isset($_GET["scan"]) ? safe_replace($_GET["scan"]) : '';
 		$wechat_user = D('wechat_user');
 		$wechat_group = D('wechat_group')->select();
 		$where = 'subscribe = 1';
 		if(isset($_GET['dosubmit'])){	
-			$searinfo = isset($_GET["searinfo"]) ? safe_replace($_GET["searinfo"]) : '';
+			$searinfo = isset($_GET['searinfo']) ? safe_replace($_GET['searinfo']) : '';
 			$type = isset($_GET["type"]) ? $_GET["type"] : 1;
-			
-			if($searinfo != ''){
-				if($type == '1')
-					$where .= ' AND wechatid = \''.$searinfo.'\'';
-				elseif($type == '2')
-					$where .= ' AND scan = \''.$searinfo.'\'';
-				else
-					$where .= ' AND nickname LIKE \'%'.$searinfo.'%\'';
-			}
-			
+
 			if($groupid != 99) {
 				$where .= ' AND groupid = '.$groupid;
-			}			
+			}
+
+			if($scan) {
+				$where .= ' AND scan = \''.$scan.'\'';
+			}	
+			
+			if($searinfo){
+				if($type == '1')
+					$where .= ' AND remark LIKE \'%'.$searinfo.'%\'';
+				elseif($type == '2')
+					$where .= ' AND wechatid = \''.$searinfo.'\'';
+				else
+					$where .= ' AND nickname LIKE \'%'.$searinfo.'%\'';
+			}		
 		}
+		$scan_arr = D('wechat_scan')->field('id,scan')->order('id DESC')->limit(100)->select();
 		$total = $wechat_user->where($where)->total();
 		$page = new page($total, 7);
 		$data = $wechat_user->where($where)->order('wechatid DESC')->limit($page->limit())->select();

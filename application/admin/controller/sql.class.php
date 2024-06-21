@@ -1,4 +1,14 @@
 <?php
+// +----------------------------------------------------------------------
+// | Site:  [ http://www.yzmcms.com]
+// +----------------------------------------------------------------------
+// | Copyright: 袁志蒙工作室，并保留所有权利
+// +----------------------------------------------------------------------
+// | Author: YuanZhiMeng <214243830@qq.com>
+// +---------------------------------------------------------------------- 
+// | Explain: 这不是一个自由软件,您只能在不用于商业目的的前提下对程序代码进行修改和使用，不允许对程序代码以任何形式任何目的的再发布！
+// +----------------------------------------------------------------------
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 yzm_base::load_controller('common', 'admin', 0);
 
@@ -14,8 +24,6 @@ class sql extends common {
 
 	/**
 	 * 执行SQL命令
-	 * 说明：此功能主要为开发人员预留功能，
-	 * 		需单独修改配置文件才可使用本功能，请各位帽子不要再此功能下挖洞了！！！
 	 */
 	public function do_sql() {
 		if(isset($_POST['sqlstr'])){
@@ -29,33 +37,15 @@ class sql extends common {
 				$sql = trim($sql);
 				if(empty($sql)) continue;
 
-				if(stristr($sql, 'outfile')){
-					$str = '<span class="c-red">ERROR : 检测到非法字符 “outfile”！</span>';
-					break;
-				}
-				if(stristr($sql, 'dumpfile')){
-					$str = '<span class="c-red">ERROR : 检测到非法字符 “dumpfile”！</span>';
-					break;
-				}
-				if(stristr($sql, '.php')){
-					$str = '<span class="c-red">ERROR : 检测到非法字符 “.php” ！</span>';
-					break;
-				}
-				if(stristr($sql, 'concat')){
-					$str = '<span class="c-red">ERROR : 检测到非法字符 “concat” ！</span>';
-					break;
-				}
-				if(preg_match("/^drop(.*)database/i", $sql)){
-					$str = '<span class="c-red">ERROR : 不允许删除数据库！</span>';
+				$res = $this->_blacklist($sql);
+				if(!$res['status']){
+					$str = $res['message'];
 					break;
 				}
 
 				$result = $admin->query($sql); 
 				if($result){
-					$str = '<span style="color:green">OK : 执行成功！</span>';
-					if(!preg_match("/^(?:UPDATE|DELETE|TRUNCATE|ALTER|DROP|FLUSH|INSERT|REPLACE|SET|CREATE)\\s+/i", $sql)){
-						$data = $admin->fetch_all($result);
-					}					
+					$str = '<span style="color:green">OK : 执行成功！</span>';					
 				}else{
 					$str = '<span class="c-red">ERROR : 执行失败！</span>';
 					break;
@@ -64,5 +54,36 @@ class sql extends common {
 		}
 
 		include $this->admin_tpl('sql');
+	}
+
+
+	/**
+	 * 关键字黑名单
+	 */
+	private function _blacklist($sql){
+		$arr = array(
+			'general_log',
+			'outfile',
+			'dumpfile',
+			'concat',
+			'replace',
+			'.php',
+		);
+		$status = true;
+		$message = '';
+		foreach ($arr as $val) {
+			if(stripos($sql, $val) !== false){
+				$status = false;
+				$message = '<span class="c-red">ERROR : 检测到非法字符 “'.$val.'” ！</span>';
+				break;
+			}
+		}
+
+		if($status && preg_match("/^drop(.*)database/i", $sql)){
+			$status = false;
+			$message = '<span class="c-red">ERROR : 不允许删除数据库！</span>';
+		}
+
+		return array('status'=>$status, 'message'=>$message);
 	}	
 }

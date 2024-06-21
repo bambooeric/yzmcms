@@ -12,7 +12,7 @@ yzm_base::load_sys_class('page','',0);
 
 class member_message extends common{
 	
-	function __construct() {
+	public function __construct() {
 		parent::__construct();
 	}
 
@@ -23,7 +23,7 @@ class member_message extends common{
 	public function init(){ 
 		$message = D('message');
 		$total = $message->total();
-		$page = new page($total, 15);
+		$page = new page($total, 10);
 		$data = $message->order('messageid DESC')->limit($page->limit())->select();			
 		include $this->admin_tpl('message_list');
 	}
@@ -37,23 +37,33 @@ class member_message extends common{
 		$message = D('message');
 		$where = '1=1';
 		if(isset($_GET['dosubmit'])){	
-			$type = isset($_GET["type"]) ? $_GET["type"] : '0';
-			$username = isset($_GET["username"]) ? safe_replace($_GET["username"]) : '';
-			
-			if($username != '' && $type != '0'){
-				if($type == '1')
-					$where .= ' AND send_to LIKE \'%'.$username.'%\'';
-				else
-					$where .= ' AND send_from LIKE \'%'.$username.'%\'';
+			$isread = isset($_GET["isread"]) ? intval($_GET["isread"]) : '99';
+			$type = isset($_GET["type"]) ? intval($_GET["type"]) : 1;
+			$searinfo = isset($_GET['searinfo']) ? safe_replace($_GET['searinfo']) : '';
+
+			if($isread < 99){
+				$where .= ' AND isread = '.$isread;
 			}
-			
+
 			if(isset($_GET['start']) && isset($_GET['end']) && $_GET['start']) {
 				$where .= " AND `message_time` >= '".strtotime($_GET["start"])."' AND `message_time` <= '".strtotime($_GET["end"])."' ";
+			}
+			
+			if($searinfo){
+				if($type == '1'){
+					$where .= ' AND send_to LIKE \'%'.$searinfo.'%\'';
+				}elseif($type == '2'){
+					$where .= ' AND send_from LIKE \'%'.$searinfo.'%\'';
+				}elseif($type == '3'){
+					$where .= ' AND subject LIKE \'%'.$searinfo.'%\'';
+				}else{
+					$where .= ' AND content LIKE \'%'.$searinfo.'%\'';
+				}
 			}			
 		}
 		$_GET = array_map('htmlspecialchars', $_GET);
 		$total = $message->where($where)->total();
-		$page = new page($total, 15);
+		$page = new page($total, 10);
 		$data = $message->where($where)->order('messageid DESC')->limit($page->limit())->select();		
 		include $this->admin_tpl('message_list');
 	}	

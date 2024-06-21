@@ -39,10 +39,11 @@ class diyform_field extends common{
 
 		if(isset($_POST['dosubmit'])) {
 			
-		   if(!preg_match('/^[a-zA-Z]{1}([a-zA-Z0-9]|[_]){0,19}$/', $_POST['field'])) showmsg('字段名不正确！');
+		   if(!preg_match('/^[a-zA-Z]{1}([a-zA-Z0-9]|[_]){0,29}$/', $_POST['field'])) showmsg('字段名格式不正确！');
 		   
-		   $files = array('input','textarea','number','datetime','image','images','attachment','select','radio','checkbox');
+		   $files = array('input','textarea','number','decimal','datetime','image','images','attachment','attachments','select','radio','checkbox');
 		   if(!in_array($_POST['fieldtype'], $files))  showmsg(L('illegal_parameters'), 'stop');
+		   $_POST = new_html_special_chars($_POST);
 		   
 		   $_POST['issystem'] = 0;	
 		   $_POST['modelid'] = $this->modelid;	
@@ -51,28 +52,32 @@ class diyform_field extends common{
 		   if(in_array($_POST['fieldtype'], array('select','radio','checkbox'))){
 			   $_POST['setting'] = array2string(explode('|', rtrim($_POST['setting'], '|')));
 		   }elseif($_POST['fieldtype']=='datetime'){
-			   $_POST['setting'] = $_POST['dateset'];
+			   $_POST['setting'] = $_POST['dateset'] ? '{"0":"1"}' : '';
 		   }else{
 			   unset($_POST['setting']);
 		   }
-		   		   
+		   
 		   if($_POST['minlength']) $_POST['isrequired'] = 1;
 
 		   if($_POST['fieldtype'] == 'input' || $_POST['fieldtype'] == 'datetime'){
-			   sql::sql_add_field($this->modeltable, $_POST['field']);  
-		   }else if($_POST['fieldtype'] == 'textarea' || $_POST['fieldtype'] == 'images'){
-			   sql::sql_add_field_mediumtext($this->modeltable, $_POST['field']);  
+				sql::sql_add_field($this->modeltable, $_POST['field']);
+		   }else if($_POST['fieldtype'] == 'textarea' || $_POST['fieldtype'] == 'images' || $_POST['fieldtype'] == 'attachments'){
+				sql::sql_add_field_mediumtext($this->modeltable, $_POST['field']);
+		   }else if($_POST['fieldtype'] == 'editor' || $_POST['fieldtype'] == 'editor_mini'){
+				sql::sql_add_field_text($this->modeltable, $_POST['field']);
 		   }else if($_POST['fieldtype'] == 'number'){
-			   sql::sql_add_field_int($this->modeltable, $_POST['field'], intval($_POST['defaultvalue']));  
-			   $_POST['fieldtype'] = 'input';
+				sql::sql_add_field_int($this->modeltable, $_POST['field'], intval($_POST['defaultvalue']));
+		   }else if($_POST['fieldtype'] == 'decimal'){
+				sql::sql_add_field_decimal($this->modeltable, $_POST['field']);
 		   }else{
-			   sql::sql_add_field($this->modeltable, $_POST['field'], $_POST['defaultvalue'], $_POST['maxlength']);  
+				sql::sql_add_field($this->modeltable, $_POST['field'], $_POST['defaultvalue'], $_POST['maxlength']);  
 		   }
 
 		   D('model_field')->insert($_POST); 
 		   delcache($this->modelid.'_model');
 		   showmsg(L('operation_success'), U('init',array('modelid'=>$this->modelid)), 1);
 		}else{
+			$modelid = $this->modelid;
 			$modelname = $this->modelname;
 			include $this->admin_tpl('diyform_field_add');
 		}
@@ -85,11 +90,13 @@ class diyform_field extends common{
 	public function edit() {
 		$fieldid = isset($_GET['fieldid']) ? intval($_GET['fieldid']) : 0;
 		if(isset($_POST['dosubmit'])) {
+
+			$_POST = new_html_special_chars($_POST);
 			
 			if(in_array($_POST['fieldtype'], array('select','radio','checkbox'))){
 			   $_POST['setting'] = array2string(explode('|', rtrim($_POST['setting'], '|')));
 			}elseif($_POST['fieldtype']=='datetime'){
-			   $_POST['setting'] = $_POST['dateset'];
+			   $_POST['setting'] = $_POST['dateset'] ? '{"0":"1"}' : '';
 			}else{
 			   unset($_POST['setting']);
 			}
@@ -104,6 +111,7 @@ class diyform_field extends common{
 				showmsg(L('data_not_modified'), U('init',array('modelid'=>$this->modelid)));
 			}
 		}else{
+			$modelid = $this->modelid;
 			$modelname = $this->modelname;
 			$data = D('model_field')->where(array('fieldid'=>$fieldid))->find();
 			include $this->admin_tpl('diyform_field_edit');
@@ -133,13 +141,34 @@ class diyform_field extends common{
 	 * 排序字段
 	 */
 	public function order() {
-		if(isset($_POST["dosubmit"])){
+		if(isset($_POST['fieldid']) && is_array($_POST['fieldid'])){
 			$model_field = D('model_field'); 
 			foreach($_POST['fieldid'] as $key=>$val){
 				$model_field->update(array('listorder'=>$_POST['listorder'][$key]),array('fieldid'=>intval($val)));
 			}
-			delcache(intval($_POST["modelid"]).'_model');
-			showmsg(L('operation_success'),'',1);
+			delcache(intval($_POST['modelid']).'_model');
+		}
+		showmsg(L('operation_success'), '' ,1);
+	}
+
+
+	/**
+	 * ajax修改状态
+	 */
+	public function public_change_status() {
+		if(is_post()){
+			$id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+			$value = isset($_POST['value']) ? intval($_POST['value']) : 0;
+			$data = D('model_field')->field('modelid,issystem')->where(array('fieldid' => $id))->find();
+			if($data['issystem']) return_json(array('status'=>0,'message'=>'系统字段不允许修改！'));
+
+			$disabled = $value ? 0 : 1;
+			if(D('model_field')->update(array('disabled' => $disabled), array('fieldid' => $id))){
+				delcache($data['modelid'].'_model');
+				return_json(array('status'=>1,'message'=>L('operation_success')));
+			}else{
+				return_json();
+			}
 		}
 	}
 
@@ -169,7 +198,7 @@ class diyform_field extends common{
 			$this->modelname = $data['name'];
 			$this->modeltable = $data['tablename'];
 		}else{
-			showmsg('模型不存在！', 'stop');
+			return_message('模型不存在！', 0);
 		}
 	}
 

@@ -20,7 +20,7 @@ define('IN_YZMPHP', true);
 //YZMPHP框架路径
 define('YP_PATH', dirname(__FILE__).DIRECTORY_SEPARATOR);
 //YZMPHP框架版本信息
-define('YZMPHP_VERSION', '2.0');
+define('YZMPHP_VERSION', '2.9');
 //YZMPHP应用目录
 define('APP_PATH', YZMPHP_PATH.'application'.DIRECTORY_SEPARATOR);
 
@@ -58,7 +58,7 @@ define('SITE_PATH', str_replace('index.php', '', PHP_FILE));
 //程序URL地址
 define('SITE_URL', SERVER_PORT.HTTP_HOST.SITE_PATH);
 //JS,IMG,CSS等URL地址
-define('STATIC_URL', SITE_URL.'common/static/');
+define('STATIC_URL', SITE_PATH.'common/static/');
 
 if(version_compare(PHP_VERSION,'5.4.0','<')) {
     define('MAGIC_QUOTES_GPC', get_magic_quotes_gpc() ? true : false);
@@ -179,6 +179,18 @@ class yzm_base {
 		$m = empty($m) ? ROUTE_M : $m;
 		if (empty($m)) return false;
 		return self::_load_class($classname, APP_PATH.$m.DIRECTORY_SEPARATOR.'model', $initialize);
+	}
+	
+	
+	/**
+	 * 加载队列处理器
+	 * @param string $classname 控制器名
+	 * @param intger $initialize 是否初始化
+	 * @return object or true
+	 */
+	public static function load_job($classname, $initialize = 1) {
+
+		return self::_load_class($classname, YZMPHP_PATH.'jobs', $initialize);
 	}
 
 }

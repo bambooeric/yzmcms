@@ -1,4 +1,11 @@
 <?php
+/**
+ * YzmCMS内容管理系统
+ * 商业用途务必到官方购买正版授权, 以免引起不必要的法律纠纷.
+ * 功能定制QQ: 21423830
+ * 版权所有 WWW.YZMCMS.COM
+ */
+
 defined('IN_YZMPHP') or exit('Access Denied'); 
 
 class sql{
@@ -33,7 +40,7 @@ class sql{
 	}
 
 
-	public static function sql_add_field($tablename, $field, $defaultvalue='', $maxlength=250){
+	public static function sql_add_field($tablename, $field, $defaultvalue='', $maxlength=255){
 		self::set_tablename($tablename);
 		$sql = "ALTER TABLE `".self::$tablename."` ADD COLUMN `$field` varchar($maxlength) NOT NULL DEFAULT '$defaultvalue'";
 		self::sql_exec($sql);			
@@ -59,7 +66,14 @@ class sql{
 		$sql = "ALTER TABLE `".self::$tablename."` ADD COLUMN `$field` int(10) UNSIGNED NOT NULL DEFAULT $defaultvalue";
 		self::sql_exec($sql);			
 	}
-	
+
+
+	public static function sql_add_field_decimal($tablename, $field, $defaultvalue='0.00'){
+		self::set_tablename($tablename);
+		$sql = "ALTER TABLE `".self::$tablename."` ADD COLUMN `$field` decimal(8,2) unsigned NOT NULL DEFAULT $defaultvalue";
+		self::sql_exec($sql);			
+	}
+
 
 	public static function sql_del_field($tablename, $field){
 		self::set_tablename($tablename);

@@ -1,6 +1,6 @@
 <?php
 /**
- * YzmCMS 安装向导
+ * YzmCMS内容管理系统 安装向导
  *
  * @author           袁志蒙  
  * @license          http://www.yzmcms.com
@@ -16,7 +16,7 @@ error_reporting(E_ALL & ~E_NOTICE);
 
 define('APPDIR', _dir_path(substr(dirname(__FILE__), 0, -8)));
 define('SITEDIR', dirname(APPDIR).DIRECTORY_SEPARATOR);
-define("VERSION", 'YzmCMS 5.6');
+define("VERSION", 'YzmCMS V7.1');
 
 if(is_file(SITEDIR.'cache'.DIRECTORY_SEPARATOR.'install.lock')){
     exit("YzmCMS程序已运行安装，如果你确定要重新安装，请先从FTP中删除 cache/install.lock！");
@@ -44,13 +44,9 @@ $steps = array(
 $step = isset($_GET['step']) ? intval($_GET['step']) : 1;
 
 //地址
-$scriptName = !empty($_SERVER["REQUEST_URI"]) ? $scriptName = $_SERVER["REQUEST_URI"] : $scriptName = $_SERVER["PHP_SELF"];
-$rootpath = @preg_replace("/\/application\/(I|i)nstall\/index\.php(.*)$/", "", $scriptName);
-$domain = empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
-if ((int) $_SERVER['SERVER_PORT'] != 80) {
-    $domain .= ":" . $_SERVER['SERVER_PORT'];
-}
-$domain = $domain . $rootpath;
+$scriptName = !empty($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : $_SERVER["PHP_SELF"];
+$rootpath = @preg_replace("/\/application\/(I|i)nstall\/index\.php(.*)$/", '/', $scriptName);
+$domain = (is_ssl() ? 'https://' : 'http://') . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '') . $rootpath;
 
 switch ($step) {
 
@@ -59,17 +55,17 @@ switch ($step) {
         exit();
 
     case '2':
-
+        header("Expires: Mon, 26 Jul 2000 08:00:00 GMT");
+        header("Cache-Control: no-cache");
+        header("Pragma: no-cache");
         if (phpversion() < 5) {
             die('本系统需要PHP5+MYSQL >=5.0环境，当前PHP版本为：' . phpversion());
         }
 
         $phpv = @ phpversion();
-        $os = PHP_OS;
-        $os = php_uname();
+        $os = php_uname('s');
         $tmp = function_exists('gd_info') ? gd_info() : array();
         $server = $_SERVER["SERVER_SOFTWARE"];
-        $host = (empty($_SERVER["SERVER_ADDR"]) ? $_SERVER["SERVER_HOST"] : $_SERVER["SERVER_ADDR"]);
         $name = $_SERVER["SERVER_NAME"];
         $max_execution_time = ini_get('max_execution_time');
         $allow_reference = (ini_get('allow_call_time_pass_reference') ? '<font color=green>[√]On</font>' : '<font color=red>[×]Off</font>');
@@ -84,7 +80,7 @@ switch ($step) {
             $gd = '<span class="correct_span">&radic;</span> 已开启';
         }
         if (class_exists('pdo')) {
-            $mysql = '<span class="correct_span">&radic;</span> 已安装PDO扩展';
+            $mysql = '<span class="correct_span">&radic;</span> 已安装PDO_MYSQL扩展';
         } else {
 			//如果没有安装PDO扩展，在检查是否安装MYSQLI扩展
 			if(class_exists('mysqli')){
@@ -93,6 +89,13 @@ switch ($step) {
 				$mysql = '<span class="correct_span error_span">&radic;</span> 未安装PDO和MYSQLI';
 				$err++;
 			}
+        }
+        !isset($_SERVER['SERVER_ADDR']) && $_SERVER['SERVER_ADDR'] = '';
+        if (strstr(gethostbyname($_SERVER['HTTP_HOST']), $_SERVER['SERVER_ADDR']) && !in_array(check_url($domain.'admin'), array('200', '550'))){
+            $rewrite_module = '<span class="correct_span error_span">&radic;</span> 未开启，<a href="javascript:;" onclick="javascript:location.reload();">刷新</a>或<a href="https://www.yzmcms.com/dongtai/121.html" target="_blank">查看教程</a>';
+            $err++;
+        } else {
+            $rewrite_module = '<span class="correct_span">&radic;</span> 已开启';
         }
         if (ini_get('file_uploads')) {
             $uploadSize = '<span class="correct_span">&radic;</span> ' . ini_get('upload_max_filesize');
@@ -156,7 +159,13 @@ switch ($step) {
             }
             mysqli_query($conn, "SET NAMES utf8"); 
 
-            if (!mysqli_select_db($conn, $dbName)) {
+            try {  
+                $is_db_exist = mysqli_select_db($conn, $dbName);
+            } catch (mysqli_sql_exception $e) {  
+                $is_db_exist = false;
+            }
+
+            if (!$is_db_exist) {
                 //创建数据时同时设置编码
                 if (!mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS `" . $dbName . "` DEFAULT CHARACTER SET utf8;")) {
                     $arr['msg'] = '数据库 ' . $dbName . ' 不存在，也没权限创建新的数据库！';
@@ -211,7 +220,7 @@ switch ($step) {
             //插入管理员
             $password = md5(substr(md5(trim($password)), 3, 26));
             $time = time();
-            $query = "INSERT INTO `{$dbPrefix}admin` VALUES ('1', '{$adminname}', '{$password}', '1', '超级管理员', '', '', '', '0', '', '{$time}', '系统')";
+            $query = "INSERT INTO `{$dbPrefix}admin` (`adminid`, `adminname`, `password`, `roleid`, `rolename`, `addtime`, `addpeople`) VALUES ('1', '{$adminname}', '{$password}', '1', '超级管理员', '{$time}', '创始人')";
             $ret = mysqli_query($conn, $query);
 			if($ret){
 				$message = '添加管理员成功';
@@ -242,6 +251,10 @@ switch ($step) {
         @touch(SITEDIR.'cache'.DIRECTORY_SEPARATOR.'install.lock');
         if(is_file(SITEDIR.'install.php')) @unlink(SITEDIR.'install.php');
 		if(is_file(SITEDIR.'index.html')) @unlink(SITEDIR.'index.html');
+        $files = glob(SITEDIR.'cache/cache_file/*.cache.php');
+        foreach ($files as $v){
+            @unlink($v);
+        }
         exit;
 }
 
@@ -314,4 +327,32 @@ function random($length, $chars = '1294567890abcdefghigklmnopqrstuvwxyzABCDEFGHI
 	}
 	return $hash;
 }
-?>
+
+function is_ssl() {
+    if(isset($_SERVER['HTTPS']) && ('1' == $_SERVER['HTTPS'] || 'on' == strtolower($_SERVER['HTTPS']))){
+        return true;
+    }elseif(isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'])) {
+        return true;
+    }elseif(isset($_SERVER['REQUEST_SCHEME']) && ('https' == strtolower($_SERVER['REQUEST_SCHEME']))) {
+        return true;
+    }elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && ('https' == strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']))) {
+        return true;
+    }elseif(isset($_SERVER['HTTP_X_FORWARDED_SCHEME']) && ('https' == strtolower($_SERVER['HTTP_X_FORWARDED_SCHEME']))) {
+        return true;
+    }
+    return false;
+}
+
+function check_url($url){
+    if(!function_exists('curl_init')) return 0;
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($curl, CURLOPT_NOSIGNAL, true); 
+    curl_setopt($curl, CURLOPT_TIMEOUT, 2); 
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    $output = curl_exec($curl);
+    $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+    return $httpcode;
+}

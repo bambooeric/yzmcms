@@ -2,7 +2,7 @@
 <title>修改资料 - YzmCMS内容管理系统</title>
 </head>
 <body>
-<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 会员管理 <span class="c-gray en">&gt;</span>修改资料 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<nav class="breadcrumb"><i class="yzm-iconfont yzm-iconai-home"></i> 首页 <span class="c-gray en">&gt;</span> 会员管理 <span class="c-gray en">&gt;</span>修改资料 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="yzm-iconfont yzm-iconshuaxin"></i></a></nav>
 <article class="page-container">
 <div class="formdoby_info"> 
 	<form action="" method="post" onsubmit="return check_all()">
@@ -22,7 +22,7 @@
 				<tr>
 					<td>最后登录</td>
 					<td>
-					<?php echo date('Y-m-d H:i:s',$data['lastdate']).' ['.$data['lastip'].']';?>
+					<?php echo $data['lastdate'] ? date('Y-m-d H:i:s',$data['lastdate']).' ['.$data['lastip'].']' : '从未登陆';?>
 					</td>
 				</tr>	
 				<tr>
@@ -39,13 +39,13 @@
 				<tr>
 					<td>密码</td>
 					<td>
-					<input type="text" name="password" value=""  class="input-text w_300"> <span class="c-red">* 不修改请留空</span>
+					<input type="text" name="password" value="" placeholder="不修改请留空" class="input-text w_300">
 					</td>
 				</tr>				
 				<tr>
 					<td>邮箱</td>
 					<td>
-					<input type="email" name="email" value="<?php echo $data['email']; ?>" class="input-text w_300"> <?php if($data['email_status']) echo '<span class="green">[已验证]</span>'; ?>
+					<input type="email" name="email" value="<?php echo $data['email']; ?>" class="input-text w_300"> <?php if($data['email_status']) echo '<i class="yzm-iconfont yzm-iconqiyong" title="已验证" style="color:#2cbac1;font-size:16px"></i>'; ?>
 					</td>
 				</tr>
 				<tr>
@@ -57,24 +57,25 @@
 				<tr>
 					<td>账户余额</td>
 					<td>
-					<input type="text" name="amount" value="<?php echo $data['amount']; ?>" disabled class="input-text w_120"> <span class="c-red">*  更改金钱已移动至「账单管理」</span>
+					<input type="text" name="amount" value="<?php echo $data['amount']; ?>" disabled class="input-text disabled w_100"> *  更改金钱已移动至「<a data-title="在线充值" style="color:#1890ff" _href="<?php echo U('member/recharge',array('username'=>$data['username']));?>" onclick="Hui_admin_tab(this)" href="javascript:void(0)">在线充值</a>」
 					</td>
 				</tr>
 				<tr>
 					<td>积分点数</td>
 					<td>
-					<input type="text" name="point" value="<?php echo $data['point']; ?>" disabled class="input-text w_120"> <span class="c-red">*  更改积分已移动至「账单管理」</span>
+					<input type="text" name="point" value="<?php echo $data['point']; ?>" disabled class="input-text disabled w_100"> *  更改积分已移动至「<a data-title="在线充值" style="color:#1890ff" _href="<?php echo U('member/recharge',array('username'=>$data['username']));?>" onclick="Hui_admin_tab(this)" href="javascript:void(0)">在线充值</a>」
 					</td>
 				</tr>
 				<tr>
 					<td>经验</td>
-					<td>
-					<input type="text" name="experience" value="<?php echo $data['experience']; ?>" required class="input-text w_120"> <span class="c-red">*  用户经验将影响会员用户组</span>
+					<td class="yzm-explain-box">
+					<input type="text" name="experience" value="<?php echo $data['experience']; ?>" required class="input-text w_100">
+					<span class="yzm-explain">用户经验将影响会员用户组</span>
 					</td>
 				</tr>				
 				<tr>
 					<td>会员组</td> 
-					<td>
+					<td class="yzm-explain-box">
 					<span class="select-box inline">
 					<select  name="groupid" class="select">
 					  <?php 
@@ -84,14 +85,16 @@
 						}
 					   ?>			
 					 </select>
-					</span> <span class="c-red">* 会员组别与经验绑定</span>
+					</span>
+					<span class="yzm-explain">会员组别与经验绑定</span>
                     </td>
 				</tr>
 				<tr>
 					<td>vip会员</td>
-					<td>
+					<td class="yzm-explain-box">
 					是否为vip会员 <input name="vip" value="1" <?php if($data['vip']) echo 'checked'; ?> type="checkbox">&nbsp;&nbsp;
-					过期时间 <input type="text" class="input-text laydate-icon" style="width:175px;height:30px;" name="overduedate" value="<?php if($data['vip']) echo date('Y-m-d H:i:s',$data['overduedate']); ?>" onclick="laydate({istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">&nbsp;&nbsp;<span class="c-red">vip会员可以免积分查看付费内容</span>
+					过期时间 <input type="text" class="input-text laydate-icon" style="width:175px;height:30px;" name="overduedate" value="<?php if($data['vip']) echo date('Y-m-d H:i:s',$data['overduedate']); ?>" onclick="laydate({istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+					<span class="yzm-explain">vip会员可以免积分查看付费内容</span>
 					</td>
 				</tr>
 				<tr>
@@ -106,7 +109,13 @@
 					 </select>
 					</span>
                     </td>
-				</tr>				
+				</tr>	
+				<tr>
+					<td>高级功能</td>
+					<td>
+					<a href="<?php echo U('login_user', array('userid'=>$userid,'yzm_csrf_token'=>$_SESSION['yzm_csrf_token']));?>" target="_blank" style="color:#1890ff"><i class="yzm-iconfont yzm-iconyonghu"></i> 登录到此用户会员中心</a>
+					</td>
+				</tr>			
 			</table>
 	  </fieldset>
 	  
@@ -116,8 +125,8 @@
 				<tr>
 					<td>性别</td> 
 					<td>
-					<label><input class="radio" type="radio" name="sex" value="男" <?php if($data['sex'] != '女') echo 'checked="checked"'; ?>>男</label>&nbsp;&nbsp;
-	                <label><input class="radio" type="radio" name="sex" value="女" <?php if($data['sex'] == '女') echo 'checked="checked"'; ?>>女</label>			
+					<label><input class="radio" type="radio" name="sex" value="男" <?php if($data['sex'] != '女') echo 'checked="checked"'; ?>> 男 </label>&nbsp;&nbsp;
+	                <label><input class="radio" type="radio" name="sex" value="女" <?php if($data['sex'] == '女') echo 'checked="checked"'; ?>> 女 </label>			
 					</td>
 				</tr>
 				<tr>
@@ -190,8 +199,8 @@
                 <tr>
 					<td></td>
 					<td>
-					<input class="dosubmit w_120 btn-primary radius" name="dosubmit" type="submit" value="提交">
-					<input class="btn w_120 btn-default radius h35" type="reset" value="重置">
+					<input class="dosubmit w_100 btn-primary radius" name="dosubmit" type="submit" value="提交">
+					<input class="btn w_100 btn-default radius h35" type="reset" value="重置">
 					</td>
 				</tr>				
 			</table>
@@ -201,7 +210,7 @@
 </article>
 <?php include $this->admin_tpl('footer', 'admin');?> 
 <script type="text/javascript" src="<?php echo STATIC_URL;?>plugin/laydate/1.1/laydate.js"></script>
-<script type="text/javascript" src="<?php echo STATIC_URL;?>js/address.js"></script>
+<script type="text/javascript" src="<?php echo STATIC_URL;?>js/yzm-address.js"></script>
 <script type="text/javascript">
 	!function(){
 		laydate({elem: '#birthday'});  //绑定生日，防止日期插件冲突
